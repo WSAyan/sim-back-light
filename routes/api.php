@@ -25,3 +25,10 @@ Route::group([
     Route::post('refresh', 'AuthController@refresh');
     Route::get('user-profile', 'AuthController@userProfile');
 });
+
+Route::group([
+    'middleware' => 'api',
+    'prefix' => 'counter'
+], function ($router) {
+    Route::post('create', 'CounterController@store');
+});
