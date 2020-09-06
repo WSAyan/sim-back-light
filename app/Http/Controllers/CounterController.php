@@ -50,13 +50,23 @@ class CounterController extends Controller
             return response()->json($validator->errors()->toJson(), 400);
         }
 
-        $counter = Counter::create(array_merge(
-                    $validator->validated()
-                ));
+        $counter = new Counter([
+            'invoice_id' => uniqid('invoice_'),
+            'user_id' => $request->get('user_id'),
+            'type' => $request->get('type'),
+            'customer_name' => $request->get('customer_name'),
+            'customer_address' => $request->get('customer_address'),
+            'customer_phone' => $request->get('customer_phone'),
+            'amount' => $request->get('amount'),
+            'invoice_photo' => $request->get('invoice_photo'),
+        ]);
+
+
+        $counter = $counter->save();
 
         return response()->json([
-            'message' => 'Invoice successfully created',
-            'counter' => $counter
+            'success' => true,
+            'message' => 'Invoice successfully created'
         ], 201);
     }
 

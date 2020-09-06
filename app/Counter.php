@@ -9,6 +9,6 @@ class Counter extends Model
     protected $table = 'counter';
 
     protected $fillable = [
-        'user_id', 'type', 'customer_name', 'customer_address', 'customer_phone', 'amount', 'invoice_photo'
+        'invoice_id', 'user_id', 'type', 'customer_name', 'customer_address', 'customer_phone', 'amount', 'invoice_photo'
     ];
 }

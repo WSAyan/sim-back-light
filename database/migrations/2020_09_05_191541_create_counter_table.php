@@ -15,6 +15,7 @@ class CreateCounterTable extends Migration
     {
         Schema::create('counter', function (Blueprint $table) {
             $table->id();
+            $table->string('invoice_id');
             $table->unsignedBigInteger('user_id');
             $table->string('type');
             $table->string('customer_name');

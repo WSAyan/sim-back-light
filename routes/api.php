@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Route;
 Route::group([
     'middleware' => 'api',
     'prefix' => 'auth'
-
 ], function ($router) {
     Route::post('login', 'AuthController@login');
     Route::post('register', 'AuthController@register');
@@ -27,7 +26,7 @@ Route::group([
 });
 
 Route::group([
-    'middleware' => 'api',
+    'middleware' => ['jwt.verify'],
     'prefix' => 'counter'
 ], function ($router) {
     Route::post('create', 'CounterController@store');
