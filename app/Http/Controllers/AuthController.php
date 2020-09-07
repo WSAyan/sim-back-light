@@ -110,7 +110,12 @@ class AuthController extends Controller {
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => auth()->factory()->getTTL() * 60,
-            'user' => auth()->user()
+            'user' => auth()
+            ->user()
+            ->join('roles_v_users','users.id', '=', 'roles_v_users.user_id')
+            ->join('roles','roles.id', '=', 'roles_v_users.role_id')
+            ->select('users.id', 'users.username', 'users.email', 'roles.rolename as role')
+            ->first()
         ]);
     }
 
