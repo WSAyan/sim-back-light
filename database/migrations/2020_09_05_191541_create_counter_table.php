@@ -20,7 +20,7 @@ class CreateCounterTable extends Migration
             $table->string('type');
             $table->string('customer_name');
             $table->string('customer_address');
-            $table->tinyInteger('customer_phone');
+            $table->string('customer_phone');
             $table->bigInteger('amount');
             $table->string('invoice_photo');
             $table->timestamps();

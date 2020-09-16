@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Validator;
 use App\Counter;
+use Illuminate\Support\Facades\Storage;
 
 class CounterController extends Controller
 {
@@ -43,12 +44,14 @@ class CounterController extends Controller
             'customer_address' => 'string',
             'customer_phone' => 'string',
             'amount' => 'numeric',
-            'invoice_photo' => 'string',
+            'invoice_photo' => 'string|max:10000000',
         ]);
 
         if($validator->fails()){
             return response()->json($validator->errors()->toJson(), 400);
         }
+
+        $imageUrl = $this->storeImage($request->get('invoice_photo'));
 
         $counter = new Counter([
             'invoice_id' => uniqid('invoice_'),
@@ -58,7 +61,7 @@ class CounterController extends Controller
             'customer_address' => $request->get('customer_address'),
             'customer_phone' => $request->get('customer_phone'),
             'amount' => $request->get('amount'),
-            'invoice_photo' => $request->get('invoice_photo'),
+            'invoice_photo' => $imageUrl,
         ]);
 
 
@@ -114,4 +117,18 @@ class CounterController extends Controller
     {
         //
     }
+
+    // stores image
+    private function storeImage($encodedImage)
+    {
+        $image = $encodedImage; 
+        $image = str_replace('data:image/png;base64,', '', $image);
+        $image = str_replace(' ', '+', $image);
+        $imageName = uniqid('image_') . '.png';
+        Storage::disk('images')->put($imageName, base64_decode($image));
+        $imageUrl = asset('images/'.$imageName);
+        
+        return $imageUrl;        
+    }
+    
 }
