@@ -30,4 +30,5 @@ Route::group([
     'prefix' => 'counter'
 ], function ($router) {
     Route::post('create', 'CounterController@store');
+    Route::get('invoices', 'CounterController@index');
 });

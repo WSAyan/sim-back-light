@@ -16,7 +16,7 @@ class CounterController extends Controller
      */
     public function index()
     {
-        //
+        return Counter::orderBy('counter.id', 'desc')->simplePaginate(25);      
     }
 
     /**
