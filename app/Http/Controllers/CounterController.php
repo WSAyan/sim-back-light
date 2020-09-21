@@ -16,7 +16,14 @@ class CounterController extends Controller
      */
     public function index()
     {
-        return Counter::orderBy('counter.id', 'desc')->simplePaginate(25);      
+        return
+        Counter::join('users','users.id', '=', 'counter.user_id')
+            ->join('roles_v_users','users.id', '=', 'roles_v_users.user_id')
+            ->join('roles','roles.id', '=', 'roles_v_users.role_id')
+            ->select('counter.*', 'users.username', 'roles.rolename')
+            ->simplePaginate(25);
+
+        //return Counter::orderBy('counter.id', 'desc')->simplePaginate(25);
     }
 
     /**
@@ -121,14 +128,14 @@ class CounterController extends Controller
     // stores image
     private function storeImage($encodedImage)
     {
-        $image = $encodedImage; 
+        $image = $encodedImage;
         $image = str_replace('data:image/png;base64,', '', $image);
         $image = str_replace(' ', '+', $image);
         $imageName = uniqid('image_') . '.png';
         Storage::disk('images')->put($imageName, base64_decode($image));
         $imageUrl = asset('images/'.$imageName);
-        
-        return $imageUrl;        
+
+        return $imageUrl;
     }
-    
+
 }

@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Validator;
 use App\User;
+use App\Role;
+use App\RoleVUser;
+use Log;
 
 
 class AuthController extends Controller {
@@ -51,16 +54,32 @@ class AuthController extends Controller {
             'username' => 'required|string|between:2,100',
             'email' => 'required|string|email|max:100|unique:users',
             'password' => 'required|string|confirmed|min:6',
+            'role'=> 'required|string',
         ]);
 
         if($validator->fails()){
             return response()->json($validator->errors()->toJson(), 400);
         }
 
+
+        $role = Role::select('id')->where("rolename", strtolower($request->role))->first();
+        if (!$role) {
+            return response()->json([
+                'success' => false,
+                'error' => "Role error!",
+                'message' => 'Invalid role!'
+            ], 400);
+        }
+
         $user = User::create(array_merge(
                     $validator->validated(),
                     ['password' => bcrypt($request->password)]
                 ));
+
+        $roleVUser = new RoleVUser();
+        $roleVUser->role_id = $role->id;
+        $roleVUser->user_id = $user->id;
+        $roleVUser->save();
 
         return response()->json([
             'message' => 'User successfully registered',
