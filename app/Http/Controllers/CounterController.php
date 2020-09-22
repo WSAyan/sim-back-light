@@ -62,7 +62,7 @@ class CounterController extends Controller
         $imageUrl = $this->storeImage($request->get('invoice_photo'));
 
         $counter = new Counter([
-            'invoice_id' => uniqid('invoice_'),
+            'invoice_id' => uniqid('#'),
             'user_id' => $request->get('user_id'),
             'type' => $request->get('type'),
             'customer_name' => $request->get('customer_name'),
