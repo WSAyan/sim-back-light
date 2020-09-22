@@ -21,6 +21,7 @@ class CounterController extends Controller
             ->join('roles_v_users','users.id', '=', 'roles_v_users.user_id')
             ->join('roles','roles.id', '=', 'roles_v_users.role_id')
             ->select('counter.*', 'users.username', 'roles.rolename')
+            ->orderBy('counter.id', 'desc')
             ->simplePaginate(25);
 
         //return Counter::orderBy('counter.id', 'desc')->simplePaginate(25);

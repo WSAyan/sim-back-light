@@ -82,6 +82,7 @@ class AuthController extends Controller {
         $roleVUser->save();
 
         return response()->json([
+            'success' => true,
             'message' => 'User successfully registered',
             'user' => $user
         ], 201);
@@ -96,7 +97,9 @@ class AuthController extends Controller {
     public function logout() {
         auth()->logout();
 
-        return response()->json(['message' => 'User successfully signed out']);
+        return response()->json([
+            'success' => true,
+            'message' => 'User successfully signed out']);
     }
 
     /**
@@ -125,15 +128,15 @@ class AuthController extends Controller {
      * @return \Illuminate\Http\JsonResponse
      */
     protected function createNewToken($token){
+        $user = auth()-> user();
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => auth()->factory()->getTTL() * 60,
-            'user' => auth()
-            ->user()
-            ->join('roles_v_users','users.id', '=', 'roles_v_users.user_id')
+            'user' => User::join('roles_v_users','users.id', '=', 'roles_v_users.user_id')
             ->join('roles','roles.id', '=', 'roles_v_users.role_id')
             ->select('users.id', 'users.username', 'users.email', 'roles.rolename as role')
+            ->where('users.id', $user->id)
             ->first()
         ]);
     }
