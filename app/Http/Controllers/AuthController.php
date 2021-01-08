@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use App\Repositories\IUserRepository;
 use Validator;
 use App\User;
 use App\Role;
@@ -11,134 +12,40 @@ use App\RoleVUser;
 use Log;
 
 
-class AuthController extends Controller {
+class AuthController extends Controller
+{
 
-    /**
-     * Create a new AuthController instance.
-     *
-     * @return void
-     */
-    public function __construct() {
+    private $userRepo;
+
+    public function __construct(IUserRepository $userRepo)
+    {
+
         $this->middleware('auth:api', ['except' => ['login', 'register']]);
+
+        $this->userRepo = $userRepo;
+
     }
 
-    /**
-     * Get a JWT via given credentials.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function login(Request $request){
-    	$validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required|string|min:6',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        if (! $token = auth()->attempt($validator->validated())) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        return $this->createNewToken($token);
+    public function login(Request $request)
+    {
+        return $this->userRepo->login($request);
     }
 
-    /**
-     * Register a User.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function register(Request $request) {
-        $validator = Validator::make($request->all(), [
-            'username' => 'required|string|between:2,100',
-            'email' => 'required|string|email|max:100|unique:users',
-            'password' => 'required|string|confirmed|min:6',
-            'role'=> 'required|string',
-        ]);
-
-        if($validator->fails()){
-            return response()->json($validator->errors()->toJson(), 400);
-        }
-
-
-        $role = Role::select('id')->where("rolename", strtolower($request->role))->first();
-        if (!$role) {
-            return response()->json([
-                'success' => false,
-                'error' => "Role error!",
-                'message' => 'Invalid role!'
-            ], 400);
-        }
-
-        $user = User::create(array_merge(
-                    $validator->validated(),
-                    ['password' => bcrypt($request->password)]
-                ));
-
-        $roleVUser = new RoleVUser();
-        $roleVUser->role_id = $role->id;
-        $roleVUser->user_id = $user->id;
-        $roleVUser->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User successfully registered',
-            'user' => $user
-        ], 201);
+    public function register(Request $request)
+    {
+        return $this->userRepo->register($request);
     }
 
-
-    /**
-     * Log the user out (Invalidate the token).
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function logout() {
-        auth()->logout();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User successfully signed out']);
+        return $this->userRepo->logout();
     }
 
-    /**
-     * Refresh a token.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function refresh() {
-        return $this->createNewToken(auth()->refresh());
+        return $this->userRepo->refresh();
     }
 
-    /**
-     * Get the authenticated User.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function userProfile() {
-        return response()->json(auth()->user());
-    }
-
-    /**
-     * Get the token array structure.
-     *
-     * @param  string $token
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    protected function createNewToken($token){
-        $user = auth()-> user();
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60,
-            'user' => User::join('roles_v_users','users.id', '=', 'roles_v_users.user_id')
-            ->join('roles','roles.id', '=', 'roles_v_users.role_id')
-            ->select('users.id', 'users.username', 'users.email', 'roles.rolename as role')
-            ->where('users.id', $user->id)
-            ->first()
-        ]);
+        return $this->userRepo->userProfile();
     }
 
 }
