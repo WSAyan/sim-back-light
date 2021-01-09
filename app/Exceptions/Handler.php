@@ -50,6 +50,14 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-        return parent::render($request, $exception);
+        // log the exception
+        error_log($exception->getMessage());
+
+        // customize error message
+        return response()->json([
+            'success' => false,
+            'message' => 'Something went wrong!',
+            'error' => $exception->getMessage()
+          ], '500');
     }
 }

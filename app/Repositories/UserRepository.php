@@ -91,15 +91,29 @@ class UserRepository implements IUserRepository
 
     protected function createNewToken($token){
         $user = auth()-> user();
+
+        $userData = User::join('roles_v_users','users.id', '=', 'roles_v_users.user_id')
+        ->join('roles','roles.id', '=', 'roles_v_users.role_id')
+        ->select('users.id', 'users.username', 'users.email', 'roles.id as roleId', 'roles.rolename as role')
+        ->where('users.id', $user->id)
+        ->first();
+
+
         return response()->json([
+            'success' => true,
+            'message' => 'user successfully logged in',
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => auth()->factory()->getTTL() * 60,
-            'user' => User::join('roles_v_users','users.id', '=', 'roles_v_users.user_id')
-            ->join('roles','roles.id', '=', 'roles_v_users.role_id')
-            ->select('users.id', 'users.username', 'users.email', 'roles.rolename as role')
-            ->where('users.id', $user->id)
-            ->first()
-        ]);
+            'user' => [
+                'user_id' => $userData->id,
+                'username' => $userData->username,
+                'email' => $userData->email
+            ],
+            'role' => [
+                'role_id' => $userData->roleId,
+                'role_name' => $userData->role
+            ]
+        ],200);
     }
 }
