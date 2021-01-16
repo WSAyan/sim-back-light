@@ -36,15 +36,18 @@ class AuthController extends Controller
         return $this->userRepo->register($request);
     }
 
-    public function logout() {
+    public function logout()
+    {
         return $this->userRepo->logout();
     }
 
-    public function refresh() {
+    public function refresh()
+    {
         return $this->userRepo->refresh();
     }
 
-    public function userProfile() {
+    public function userProfile()
+    {
         return $this->userRepo->userProfile();
     }
 
