@@ -3,9 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Validator;
-use App\Counter;
-use Illuminate\Support\Facades\Storage;
 use App\Repositories\ICounterRepository;
 
 class CounterController extends Controller

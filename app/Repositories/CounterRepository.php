@@ -2,7 +2,7 @@
 namespace App\Repositories;
 
 use Illuminate\Http\Request;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 use App\Counter;
 use Illuminate\Support\Facades\Storage;
 

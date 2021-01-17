@@ -32,3 +32,21 @@ Route::group([
     Route::post('create', 'CounterController@store');
     Route::get('invoices', 'CounterController@index');
 });
+
+Route::group([
+    'middleware' => ['jwt.verify'],
+    'prefix' => 'category'
+], function ($router) {
+    Route::post('create', 'CategoryController@store');
+    Route::get('categories', 'CategoryController@index');
+    Route::get('categories/{id}', 'CategoryController@show');
+});
+
+Route::group([
+    'middleware' => ['jwt.verify'],
+    'prefix' => 'product'
+], function ($router) {
+    Route::post('create', 'ProductController@store');
+    Route::get('products', 'ProductController@index');
+    Route::get('products/{id}', 'ProductController@show');
+});

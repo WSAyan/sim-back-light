@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Repositories\CategoryRepository;
+use App\Repositories\ProductRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\UserRepository;
 use App\Repositories\CounterRepository;
@@ -22,6 +24,14 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind('App\Repositories\ICounterRepository', function ($app) {
             return new CounterRepository();
+        });
+
+        $this->app->bind('App\Repositories\IProductRepository', function ($app) {
+            return new ProductRepository();
+        });
+
+        $this->app->bind('App\Repositories\ICategoryRepository', function ($app) {
+            return new CategoryRepository();
         });
 
     }
