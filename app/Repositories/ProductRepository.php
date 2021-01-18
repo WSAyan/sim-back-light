@@ -6,7 +6,6 @@ namespace App\Repositories;
 
 use App\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ProductRepository implements IProductRepository
@@ -14,7 +13,24 @@ class ProductRepository implements IProductRepository
 
     public function getProductList()
     {
-        $products = DB::table('products')->paginate(25);
+        $products = Product::join('categories', 'categories.id', '=', 'products.category_id')
+            ->join('brands', 'brands.id', '=', 'products.brand_id')
+            ->join('units', 'units.id', '=', 'products.unit_id')
+            ->select(
+                'products.id as product_id',
+                'products.sku as product_sku',
+                'products.name as product_name',
+                'products.description as product_description',
+                'products.price as product_unit_price',
+                'products.stock_quantity as product_stock_quantity',
+                'categories.name as category_name',
+                'brands.brand_name as brand',
+                'units.unit_name as unit',
+                'units.is_reminder_allowed as unit_reminder_allowed'
+            )
+            ->orderBy('products.id', 'desc')
+            ->paginate(25);
+
         return response()->json([
             'success' => true,
             'message' => 'Product list generated',
@@ -30,6 +46,7 @@ class ProductRepository implements IProductRepository
             'brand_id' => 'required',
             'unit_id' => 'required',
             'price' => 'required',
+            'stock_quantity' => 'required',
             'name' => 'required|string',
             'description' => 'required|string',
         ]);
@@ -48,6 +65,7 @@ class ProductRepository implements IProductRepository
             'brand_id' => $request->get('brand_id'),
             'unit_id' => $request->get('unit_id'),
             'price' => $request->get('price'),
+            'stock_quantity' => $request->get('stock_quantity'),
             'name' => $request->get('name'),
             'description' => $request->get('description'),
             'sku' => uniqid('sku-')

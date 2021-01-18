@@ -19,6 +19,7 @@ class CreateProductsTable extends Migration
             $table->unsignedBigInteger('brand_id');
             $table->unsignedBigInteger('unit_id');
             $table->unsignedDecimal('price', 8, 2);
+            $table->unsignedDecimal('stock_quantity', 8, 2);
             $table->string('name');
             $table->string('description');
             $table->string('sku');
