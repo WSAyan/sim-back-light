@@ -16,12 +16,12 @@ class ProductController extends Controller
 
     public function index()
     {
-
+        return $this->productRepo->getProductList();
     }
 
     public function store(Request $request)
     {
-
+        return $this->productRepo->storeProduct($request);
     }
 
     public function show($id)
