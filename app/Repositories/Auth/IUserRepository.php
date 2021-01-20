@@ -1,13 +1,8 @@
 <?php
-namespace App\Repositories;
 
-use Illuminate\Support\Facades\Auth;
+namespace App\Repositories\Auth;
+
 use Illuminate\Http\Request;
-use Validator;
-use App\User;
-use App\Role;
-use App\RoleVUser;
-use Log;
 
 interface IUserRepository
 {

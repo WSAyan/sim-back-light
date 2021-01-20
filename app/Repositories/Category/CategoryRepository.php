@@ -1,10 +1,11 @@
 <?php
 
 
-namespace App\Repositories;
+namespace App\Repositories\Category;
 
 
 use App\Category;
+use App\Repositories\Category\ICategoryRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;

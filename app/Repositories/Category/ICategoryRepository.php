@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Repositories;
+namespace App\Repositories\Category;
 
 
 use Illuminate\Http\Request;

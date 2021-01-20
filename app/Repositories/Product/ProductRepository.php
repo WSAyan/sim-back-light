@@ -1,11 +1,12 @@
 <?php
 
 
-namespace App\Repositories;
+namespace App\Repositories\Product;
 
 
 use App\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ProductRepository implements IProductRepository
@@ -84,5 +85,15 @@ class ProductRepository implements IProductRepository
             'success' => true,
             'message' => 'Product successfully created'
         ], 201);
+    }
+
+    public function showProduct($id)
+    {
+        $product = DB::table('products')->where('id', $id)->first();
+        return response()->json([
+            'success' => true,
+            'message' => 'Product showed',
+            'product' => $product
+        ]);
     }
 }

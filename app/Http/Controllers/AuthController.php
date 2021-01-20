@@ -2,14 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Auth;
+use App\Repositories\Auth\IUserRepository;
 use Illuminate\Http\Request;
-use App\Repositories\IUserRepository;
-use Validator;
-use App\User;
-use App\Role;
-use App\RoleVUser;
-use Log;
+
 
 
 class AuthController extends Controller

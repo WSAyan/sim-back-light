@@ -1,5 +1,5 @@
 <?php
-namespace App\Repositories;
+namespace App\Repositories\Counter;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;

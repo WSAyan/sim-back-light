@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Repositories\IProductRepository;
+use App\Repositories\Product\IProductRepository;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -26,7 +26,7 @@ class ProductController extends Controller
 
     public function show($id)
     {
-
+        return $this->productRepo->showProduct($id);
     }
 
     public function edit($id)

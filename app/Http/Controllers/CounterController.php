@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Repositories\Counter\ICounterRepository;
 use Illuminate\Http\Request;
-use App\Repositories\ICounterRepository;
 
 class CounterController extends Controller
 {

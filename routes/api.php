@@ -50,3 +50,12 @@ Route::group([
     Route::get('products', 'ProductController@index');
     Route::get('products/{id}', 'ProductController@show');
 });
+
+Route::group([
+    'middleware' => ['jwt.verify'],
+    'prefix' => 'order'
+], function ($router) {
+    Route::post('create', 'OrderController@store');
+    Route::get('orders', 'OrderController@index');
+    Route::get('orders/{id}', 'OrderController@show');
+});
