@@ -17,6 +17,7 @@ class CreateStocksTable extends Migration
             $table->id();
             $table->unsignedBigInteger('product_id');
             $table->string('sku');
+            $table->unsignedDecimal('quantity', 8, 2);
             $table->timestamps();
         });
     }

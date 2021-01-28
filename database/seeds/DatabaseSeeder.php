@@ -6,6 +6,8 @@ use App\DeliveryMethod;
 use App\OrderStatus;
 use App\PaymentMethod;
 use App\PaymentStatus;
+use App\ProductOption;
+use App\ProductOptionsDetail;
 use App\Role;
 use App\RoleVUser;
 use App\Tax;
@@ -42,6 +44,10 @@ class DatabaseSeeder extends Seeder
         $this->insertTax();
 
         $this->insertUnits();
+
+        $this->insertProductOptions();
+
+        $this->insertProductOptionsDetails();
     }
 
     private function insertRoles()
@@ -266,6 +272,55 @@ class DatabaseSeeder extends Seeder
         $units_weight = Unit::create([
             'unit_name' => 'kg',
             'is_reminder_allowed' => true,
+        ]);
+    }
+
+    private function insertProductOptions()
+    {
+        $size_option = ProductOption::create([
+            'name' => 'Sizes'
+        ]);
+
+        $color_option = ProductOption::create([
+            'name' => 'Colors'
+        ]);
+    }
+
+    private function insertProductOptionsDetails()
+    {
+        $size_option_s = ProductOptionsDetail::create([
+            'product_options_id' => 1,
+            'name' => 'S'
+        ]);
+
+        $size_option_l = ProductOptionsDetail::create([
+            'product_options_id' => 1,
+            'name' => 'L'
+        ]);
+
+        $size_option_xl = ProductOptionsDetail::create([
+            'product_options_id' => 1,
+            'name' => 'XL'
+        ]);
+
+        $size_option_xxl = ProductOptionsDetail::create([
+            'product_options_id' => 1,
+            'name' => 'XXL'
+        ]);
+
+        $color_option_red = ProductOptionsDetail::create([
+            'product_options_id' => 2,
+            'name' => 'Red'
+        ]);
+
+        $color_option_blue = ProductOptionsDetail::create([
+            'product_options_id' => 2,
+            'name' => 'Blue'
+        ]);
+
+        $color_option_yellow = ProductOptionsDetail::create([
+            'product_options_id' => 2,
+            'name' => 'Yellow'
         ]);
     }
 }

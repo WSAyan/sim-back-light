@@ -5,6 +5,8 @@ namespace App\Repositories\Product;
 
 
 use App\Product;
+use App\ProductVOption;
+use App\Stock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -47,6 +49,7 @@ class ProductRepository implements IProductRepository
             'brand_id' => 'required',
             'unit_id' => 'required',
             'price' => 'required',
+            'has_options' => 'required',
             'stock_quantity' => 'required',
             'name' => 'required|string',
             'description' => 'required|string',
@@ -61,24 +64,59 @@ class ProductRepository implements IProductRepository
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
+        $category_id = $request->get('category_id');
+        $brand_id = $request->get('brand_id');
+        $unit_id = $request->get('unit_id');
+        $price = $request->get('price');
+        $name = $request->get('name');
+        $description = $request->get('description');
+        $has_options = $request->get('has_options');
+        $product_details = json_decode($request->get('product_details'), true);
+        $stock_quantity = $request->get('stock_quantity');
+        $sku = uniqid('sku-');
+
         $product = new Product([
-            'category_id' => $request->get('category_id'),
-            'brand_id' => $request->get('brand_id'),
-            'unit_id' => $request->get('unit_id'),
-            'price' => $request->get('price'),
-            'stock_quantity' => $request->get('stock_quantity'),
-            'name' => $request->get('name'),
-            'description' => $request->get('description'),
-            'sku' => uniqid('sku-')
+            'category_id' => $category_id,
+            'brand_id' => $brand_id,
+            'unit_id' => $unit_id,
+            'price' => $price,
+            'name' => $name,
+            'description' => $description,
+            'has_options' => $has_options,
+            'stock_quantity' => $stock_quantity
         ]);
+        $product->save();
 
-        $product = $product->save();
+        if ($has_options == false) {
+            // saving only one sku
+            $stock = new Stock([
+                'product_id' => $product->id,
+                'sku' => $sku,
+                'quantity' => $stock_quantity
+            ]);
+            $stock->save();
+        } else {
+            // saving multiple sku depending on options
+            foreach ($product_details as $item) {
+                $product_options_id = $item['product_options_id'];
+                $product_options_details_id = $item['product_options_details_id'];
+                $quantity = $item['quantity'];
 
-        if ($product == false) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong!'
-            ], 500);
+                $stock = new Stock([
+                    'product_id' => $product->id,
+                    'sku' => $sku,
+                    'quantity' => $quantity
+                ]);
+                $stock->save();
+
+                $productVOption = new ProductVOption([
+                    'product_id' => $product->id,
+                    'product_options_id' => $product_options_id,
+                    'product_options_details_id' => $product_options_details_id,
+                    'stock_id' => $stock->id
+                ]);
+                $productVOption->save();
+            }
         }
 
         return response()->json([

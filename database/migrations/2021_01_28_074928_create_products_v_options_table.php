@@ -18,7 +18,7 @@ class CreateProductsVOptionsTable extends Migration
             $table->unsignedBigInteger('product_id');
             $table->unsignedBigInteger('product_options_id');
             $table->unsignedBigInteger('product_options_details_id');
-            $table->unsignedDecimal('stock_quantity', 8, 2);
+            $table->unsignedBigInteger('stock_id');
             $table->timestamps();
         });
     }

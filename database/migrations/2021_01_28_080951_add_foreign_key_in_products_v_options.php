@@ -17,6 +17,7 @@ class AddForeignKeyInProductsVOptions extends Migration
             $table->foreign('product_id')->references('id')->on('products');
             $table->foreign('product_options_id')->references('id')->on('product_options');
             $table->foreign('product_options_details_id')->references('id')->on('product_options_details');
+            $table->foreign('stock_id')->references('id')->on('stocks');
         });
     }
 
@@ -31,6 +32,7 @@ class AddForeignKeyInProductsVOptions extends Migration
             $table->foreign('product_id')->references('id')->on('products');
             $table->foreign('product_options_id')->references('id')->on('product_options');
             $table->foreign('product_options_details_id')->references('id')->on('product_options_details');
+            $table->foreign('stock_id')->references('id')->on('stocks');
         });
     }
 }
