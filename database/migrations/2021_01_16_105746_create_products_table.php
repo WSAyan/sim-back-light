@@ -20,9 +20,9 @@ class CreateProductsTable extends Migration
             $table->unsignedBigInteger('unit_id');
             $table->unsignedDecimal('price', 8, 2);
             $table->unsignedDecimal('stock_quantity', 8, 2);
+            $table->boolean('has_options');
             $table->string('name');
             $table->string('description');
-            $table->string('sku');
             $table->timestamps();
         });
     }
