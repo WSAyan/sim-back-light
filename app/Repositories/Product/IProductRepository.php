@@ -13,4 +13,11 @@ interface IProductRepository
     public function storeProduct(Request $request);
 
     public function showProduct($id);
+
+    public function getProductWithId($id);
+
+    public function getProductOptionsWithDetails($id);
+
+    public function getProductOptionsWithProduct($id);
+
 }

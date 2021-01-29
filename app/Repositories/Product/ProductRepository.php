@@ -21,7 +21,6 @@ class ProductRepository implements IProductRepository
             ->join('units', 'units.id', '=', 'products.unit_id')
             ->select(
                 'products.id as product_id',
-                'products.sku as product_sku',
                 'products.name as product_name',
                 'products.description as product_description',
                 'products.price as product_unit_price',
@@ -73,7 +72,7 @@ class ProductRepository implements IProductRepository
         $has_options = $request->get('has_options');
         $product_details = json_decode($request->get('product_details'), true);
         $stock_quantity = $request->get('stock_quantity');
-        $sku = uniqid('sku-');
+        $sku = uniqid('sku-'); // TODO: fix sku, move into loop
 
         $product = new Product([
             'category_id' => $category_id,
@@ -127,11 +126,112 @@ class ProductRepository implements IProductRepository
 
     public function showProduct($id)
     {
-        $product = DB::table('products')->where('id', $id)->first();
         return response()->json([
             'success' => true,
             'message' => 'Product showed',
-            'product' => $product
+            'product' => $this->getProductWithId($id)
         ]);
+    }
+
+    /**
+     * @param $id : product id
+     * @return array
+     */
+    public function getProductWithId($id)
+    {
+        // get product
+        $product = DB::table('products')
+            ->join('categories', 'categories.id', '=', 'products.category_id')
+            ->join('brands', 'brands.id', '=', 'products.brand_id')
+            ->join('units', 'units.id', '=', 'products.unit_id')
+            ->select(
+                'products.id as product_id',
+                'products.name as product_name',
+                'products.description as product_description',
+                'products.price as product_unit_price',
+                'products.stock_quantity as product_stock_quantity',
+                'categories.id as category_id',
+                'categories.name as category_name',
+                'brands.id as brand_id',
+                'brands.brand_name as brand_name',
+                'units.id as unit_id',
+                'units.unit_name as unit_name',
+                'units.is_reminder_allowed as unit_reminder_allowed'
+            )
+            ->where('products.id', $id)
+            ->first();
+
+        // process query results
+        $result = [];
+        $result['id'] = $product->product_id;
+        $result['name'] = $product->product_name;
+        $result['description'] = $product->product_description;
+        $result['price'] = $product->product_unit_price;
+        $result['stock_quantity'] = $product->product_stock_quantity;
+        $result['category']['id'] = $product->category_id;
+        $result['category']['name'] = $product->category_name;
+        $result['brand']['id'] = $product->brand_id;
+        $result['brand']['brand_name'] = $product->brand_name;
+        $result['unit']['id'] = $product->unit_id;
+        $result['unit']['unit_name'] = $product->unit_name;
+        $result['unit']['is_reminder_allowed'] = $product->unit_reminder_allowed;
+        $result['product_options'] = $this->getProductOptionsWithDetails($id);
+
+        return $result;
+    }
+
+    /**
+     * @param $id : product id
+     * @return array
+     */
+    public function getProductOptionsWithDetails($id)
+    {
+        // get product options
+        $productsOptions = $this->getProductOptionsWithProduct($id);
+
+        $productOptionsAndDetails = [];
+        $i = 0;
+        foreach ($productsOptions as $item) {
+            $productOptionsAndDetails[$i]['product_options_id'] = $item->product_options_id;
+            $productOptionsAndDetails[$i]['product_options_name'] = $item->product_options_name;
+
+            // get product details
+            $details = DB::table('products_v_options')
+                ->join('product_options_details', 'products_v_options.product_options_details_id', '=', 'product_options_details.id')
+                ->join('stocks', 'products_v_options.stock_id', '=', 'stocks.id')
+                ->select(
+                    'product_options_details.id as id',
+                    'product_options_details.name as name',
+                    'stocks.quantity as quantity',
+                    'stocks.sku as sku'
+                )
+                ->where('products_v_options.product_id', $id)
+                ->where('products_v_options.product_options_id', $item->product_options_id)
+                ->get();
+
+            $productOptionsAndDetails[$i]['product_details'] = $details;
+            $i++;
+        }
+
+        return $productOptionsAndDetails;
+    }
+
+    /**
+     * @param $id : product id
+     * @return \Illuminate\Support\Collection
+     */
+    public function getProductOptionsWithProduct($id)
+    {
+        $productsOptions = DB::table('products_v_options')
+            ->join('product_options', 'products_v_options.product_options_id', '=', 'product_options.id')
+            ->select(
+                'product_options.id as product_options_id',
+                'product_options.name as product_options_name'
+            )
+            ->where('products_v_options.product_id', $id)
+            ->groupBy('product_options_id')
+            ->get();
+
+        return $productsOptions;
     }
 }
