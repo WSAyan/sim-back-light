@@ -72,7 +72,6 @@ class ProductRepository implements IProductRepository
         $has_options = $request->get('has_options');
         $product_details = json_decode($request->get('product_details'), true);
         $stock_quantity = $request->get('stock_quantity');
-        $sku = uniqid('sku-'); // TODO: fix sku, move into loop
 
         $product = new Product([
             'category_id' => $category_id,
@@ -90,7 +89,7 @@ class ProductRepository implements IProductRepository
             // saving only one sku
             $stock = new Stock([
                 'product_id' => $product->id,
-                'sku' => $sku,
+                'sku' => uniqid('sku-'),
                 'quantity' => $stock_quantity
             ]);
             $stock->save();
@@ -103,7 +102,7 @@ class ProductRepository implements IProductRepository
 
                 $stock = new Stock([
                     'product_id' => $product->id,
-                    'sku' => $sku,
+                    'sku' => uniqid('sku-'),
                     'quantity' => $quantity
                 ]);
                 $stock->save();
