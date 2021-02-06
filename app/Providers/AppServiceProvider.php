@@ -2,13 +2,7 @@
 
 namespace App\Providers;
 
-use App\Repositories\Auth\UserRepository;
-use App\Repositories\Category\CategoryRepository;
-use App\Repositories\Counter\CounterRepository;
-use App\Repositories\Order\OrderRepository;
-use App\Repositories\Product\ProductRepository;
 use Illuminate\Support\ServiceProvider;
-
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,25 +13,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind('App\Repositories\Auth\IUserRepository', function ($app) {
-            return new UserRepository();
-        });
+        $this->app->bind('App\Repositories\Auth\IUserRepository', 'App\Repositories\Auth\UserRepository');
 
-        $this->app->bind('App\Repositories\Counter\ICounterRepository', function ($app) {
-            return new CounterRepository();
-        });
+        $this->app->bind('App\Repositories\Counter\ICounterRepository', 'App\Repositories\Counter\CounterRepository');
 
-        $this->app->bind('App\Repositories\Product\IProductRepository', function ($app) {
-            return new ProductRepository();
-        });
+        $this->app->bind('App\Repositories\Product\IProductRepository', 'App\Repositories\Product\ProductRepository');
 
-        $this->app->bind('App\Repositories\Category\ICategoryRepository', function ($app) {
-            return new CategoryRepository();
-        });
+        $this->app->bind('App\Repositories\Image\IImageRepository', 'App\Repositories\Image\ImageRepository');
 
-        $this->app->bind('App\Repositories\Order\IOrderRepository', function ($app) {
-            return new OrderRepository();
-        });
+        $this->app->bind('App\Repositories\Category\ICategoryRepository', 'App\Repositories\Category\CategoryRepository');
+
+        $this->app->bind('App\Repositories\Order\IOrderRepository', 'App\Repositories\Order\OrderRepository');
     }
 
     /**

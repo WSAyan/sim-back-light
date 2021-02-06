@@ -6,15 +6,19 @@ namespace App\Repositories\Category;
 
 use App\Category;
 use App\CategoryVImage;
-use App\Image;
-use App\Repositories\Category\ICategoryRepository;
+use App\Repositories\Image\IImageRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class CategoryRepository implements ICategoryRepository
 {
+    private $imageRepo;
+
+    public function __construct(IImageRepository $imageRepo)
+    {
+        $this->imageRepo = $imageRepo;
+    }
 
     public function getCategoryList()
     {
@@ -44,14 +48,8 @@ class CategoryRepository implements ICategoryRepository
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $postedImage = $request->file('image');
-        $imageName = uniqid('image-') . '-' . time() . '.' . $postedImage->getClientOriginalExtension();
-        $postedImage->storeAs('images', $imageName);
-        $image = new Image([
-            'image' => $imageName
-        ]);
-        $status = $image->save();
-        if ($status == false) {
+        $image = $this->imageRepo->storeImage($request->file('image'));
+        if (is_null($image)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong!'
