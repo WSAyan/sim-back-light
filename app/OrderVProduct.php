@@ -13,6 +13,7 @@ class OrderVProduct extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'stock_id',
         'order_quantity'
     ];
 

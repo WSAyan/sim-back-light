@@ -11,7 +11,6 @@ use App\Repositories\Category\ICategoryRepository;
 use App\Stock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ProductRepository implements IProductRepository
@@ -140,15 +139,20 @@ class ProductRepository implements IProductRepository
         return response()->json([
             'success' => true,
             'message' => 'Product showed',
-            'product' => $this->getProductWithId($id)
+            'product' => $this->getProductDetailsById($id)
         ]);
+    }
+
+    public function getProductById($id)
+    {
+        return DB::table('products')->where('id', $id)->first();
     }
 
     /**
      * @param $id : product id
      * @return array
      */
-    public function getProductWithId($id)
+    public function getProductDetailsById($id)
     {
         // get product
         $product = DB::table('products')
@@ -269,8 +273,25 @@ class ProductRepository implements IProductRepository
         if ($stockId == null) $stockId = 0;
         $stockId++;
 
-        $sku = dechex($stockId) . substr($productName, 0, 2) . substr($brandName, 0, 2) . substr($categoryName, 0, 2);
+        $stockId = strtoupper(dechex($stockId));
+
+        $sku = $stockId . substr($productName, 0, 2) . substr($brandName, 0, 2) . substr($categoryName, 0, 2);
 
         return $sku;
+    }
+
+    public function updateProductStock($product_id, $stock_id, $quantity)
+    {
+        $product = DB::table('products')->where('id', $product_id)->first();
+        $updatedQuantity = $product->stock_quantity - $quantity;
+        $updatedProduct = DB::table('products')
+            ->where('id', $product_id)
+            ->update(['stock_quantity' => $updatedQuantity]);
+
+        $stock = DB::table('stocks')->where('id', $stock_id)->first();
+        $updatedQuantity = $stock->quantity - $quantity;
+        $updatedStock = DB::table('stocks')
+            ->where('id', $stock_id)
+            ->update(['quantity' => $updatedQuantity]);
     }
 }

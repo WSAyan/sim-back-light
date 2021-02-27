@@ -14,7 +14,9 @@ interface IProductRepository
 
     public function showProduct($id);
 
-    public function getProductWithId($id);
+    public function getProductDetailsById($id);
+
+    public function getProductById($id);
 
     public function getProductOptionsWithDetails($id);
 
@@ -22,4 +24,5 @@ interface IProductRepository
 
     public function generateSku($productName, $brandName, $categoryName);
 
+    public function updateProductStock($product_id, $stock_id, $quantity);
 }

@@ -6,20 +6,28 @@ namespace App\Repositories\Order;
 
 use App\Order;
 use App\OrderVProduct;
+use App\Repositories\Product\IProductRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class OrderRepository implements IOrderRepository
 {
+    private $productRepo;
+
+    public function __construct(IProductRepository $productRepo)
+    {
+        $this->productRepo = $productRepo;
+    }
 
     public function getOrdersList()
     {
+        $orders = DB::table('orders')->paginate(25);
+
         return response()->json([
             'success' => true,
             'message' => 'Order list test',
-            'orders' => null
+            'orders' => $orders
         ]);
     }
 
@@ -60,7 +68,7 @@ class OrderRepository implements IOrderRepository
             $product_id = $item['product_id'];
             $quantity = $item['quantity'];
 
-            $product = DB::table('products')->where('id', $product_id)->first();
+            $product = $this->productRepo->getProductById($product_id);
             // check if product exists
             if ($product == null) {
                 $isValidProduct = false;
@@ -136,21 +144,19 @@ class OrderRepository implements IOrderRepository
         // insert ordered products in orders_v_products
         foreach ($product_list as $item) {
             $product_id = $item['product_id'];
+            $stock_id = $item['stock_id'];
             $quantity = $item['quantity'];
 
             $orderVProduct = new OrderVProduct([
                 'order_id' => $order->id,
                 'product_id' => $product_id,
+                'stock_id' => $stock_id,
                 'order_quantity' => $quantity
             ]);
             $orderVProduct->save();
 
             // update product stock
-            $product = DB::table('products')->where('id', $product_id)->first();
-            $updatedQuantity = $product->stock_quantity - $quantity;
-            $updatedProduct = DB::table('products')
-                ->where('id', $product_id)
-                ->update(['stock_quantity' => $updatedQuantity]);
+            $this->productRepo->updateProductStock($product_id, $stock_id, $quantity);
         }
 
         return response()->json([
