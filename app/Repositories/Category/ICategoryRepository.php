@@ -11,4 +11,6 @@ interface ICategoryRepository
     public function getCategoryList();
 
     public function storeCategory(Request $request);
+
+    public function getCategoryDetailsById($id);
 }

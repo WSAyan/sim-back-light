@@ -6,13 +6,23 @@ namespace App\Repositories\Product;
 
 use App\Product;
 use App\ProductVOption;
+use App\Repositories\Brand\IBrandRepository;
+use App\Repositories\Category\ICategoryRepository;
 use App\Stock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ProductRepository implements IProductRepository
 {
+    private $brandRepo, $categoryRepo;
+
+    public function __construct(IBrandRepository $brandRepo, ICategoryRepository $categoryRepo)
+    {
+        $this->brandRepo = $brandRepo;
+        $this->categoryRepo = $categoryRepo;
+    }
 
     public function getProductList()
     {
@@ -85,11 +95,13 @@ class ProductRepository implements IProductRepository
         ]);
         $product->save();
 
+        $brand_name = $this->brandRepo->getBrandDetailsById($brand_id)->brand_name;
+        $category_name = $this->categoryRepo->getCategoryDetailsById($category_id)->name;
         if ($has_options == false) {
             // saving only one sku
             $stock = new Stock([
                 'product_id' => $product->id,
-                'sku' => uniqid('sku-'),
+                'sku' => $this->generateSku($name, $brand_name, $category_name),
                 'quantity' => $stock_quantity
             ]);
             $stock->save();
@@ -102,7 +114,7 @@ class ProductRepository implements IProductRepository
 
                 $stock = new Stock([
                     'product_id' => $product->id,
-                    'sku' => uniqid('sku-'),
+                    'sku' => $this->generateSku($name, $brand_name, $category_name),
                     'quantity' => $quantity
                 ]);
                 $stock->save();
@@ -201,6 +213,7 @@ class ProductRepository implements IProductRepository
                 ->select(
                     'product_options_details.id as id',
                     'product_options_details.name as name',
+                    'stocks.id as stock_id',
                     'stocks.quantity as quantity',
                     'stocks.sku as sku'
                 )
@@ -232,5 +245,32 @@ class ProductRepository implements IProductRepository
             ->get();
 
         return $productsOptions;
+    }
+
+    public function generateSku($productName, $brandName, $categoryName)
+    {
+        if ($productName == null) return;
+
+        if ($brandName == null) return;
+
+        if ($categoryName == null) return;
+
+        if (strlen($productName) < 2) return;
+
+        if (strlen($brandName) < 2) return;
+
+        if (strlen($categoryName) < 2) return;
+
+        $productName = strtoupper($productName);
+        $brandName = strtoupper($brandName);
+        $categoryName = strtoupper($categoryName);
+
+        $stockId = DB::table('stocks')->max('id');
+        if ($stockId == null) $stockId = 0;
+        $stockId++;
+
+        $sku = dechex($stockId) . substr($productName, 0, 2) . substr($brandName, 0, 2) . substr($categoryName, 0, 2);
+
+        return $sku;
     }
 }

@@ -20,4 +20,6 @@ interface IProductRepository
 
     public function getProductOptionsWithProduct($id);
 
+    public function generateSku($productName, $brandName, $categoryName);
+
 }

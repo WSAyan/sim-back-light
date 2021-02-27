@@ -79,4 +79,11 @@ class CategoryRepository implements ICategoryRepository
             'message' => 'Category successfully created'
         ], 201);
     }
+
+    public function getCategoryDetailsById($id)
+    {
+        return DB::table('categories')
+            ->where('categories.id', $id)
+            ->first();
+    }
 }
