@@ -17,6 +17,7 @@ class CreateOrdersVProductsTable extends Migration
             $table->id();
             $table->unsignedBigInteger('order_id');
             $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('stock_id');
             $table->unsignedDecimal('order_quantity', 8, 2);
             $table->timestamps();
         });

@@ -16,6 +16,7 @@ class AddForeignKeyInOrdersVProducts extends Migration
         Schema::table('orders_v_products', function (Blueprint $table) {
             $table->foreign('order_id')->references('id')->on('orders');
             $table->foreign('product_id')->references('id')->on('products');
+            $table->foreign('stock_id')->references('id')->on('stocks');
         });
     }
 
@@ -29,6 +30,7 @@ class AddForeignKeyInOrdersVProducts extends Migration
         Schema::table('orders_v_products', function (Blueprint $table) {
             $table->foreign('order_id')->references('id')->on('orders');
             $table->foreign('product_id')->references('id')->on('products');
+            $table->foreign('stock_id')->references('id')->on('stocks');
         });
     }
 }
