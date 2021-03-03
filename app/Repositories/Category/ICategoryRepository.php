@@ -13,4 +13,8 @@ interface ICategoryRepository
     public function storeCategory(Request $request);
 
     public function getCategoryDetailsById($id);
+
+    public function saveCategory($name, $description);
+
+    public function saveCategoryVIImage($category_id, $image_id);
 }

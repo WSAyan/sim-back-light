@@ -110,6 +110,11 @@
       <path value="$PROJECT_DIR$/vendor/namshi/jose" />
     </include_path>
   </component>
+  <component name="PhpProjectServersManager">
+    <servers>
+      <server host="127.0.0.1" id="893cd3da-5392-4c62-b7c3-1d23bd23fb32" name="laravel-local" port="8000" use_path_mappings="true" />
+    </servers>
+  </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="7.2" />
   <component name="PhpUnit">
     <phpunit_settings>

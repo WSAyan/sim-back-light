@@ -5,9 +5,11 @@ namespace App\Repositories\Product;
 
 
 use App\Product;
+use App\ProductVImage;
 use App\ProductVOption;
 use App\Repositories\Brand\IBrandRepository;
 use App\Repositories\Category\ICategoryRepository;
+use App\Repositories\Image\IImageRepository;
 use App\Stock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,12 +17,13 @@ use Illuminate\Support\Facades\Validator;
 
 class ProductRepository implements IProductRepository
 {
-    private $brandRepo, $categoryRepo;
+    private $brandRepo, $categoryRepo, $imageRepo;
 
-    public function __construct(IBrandRepository $brandRepo, ICategoryRepository $categoryRepo)
+    public function __construct(IBrandRepository $brandRepo, ICategoryRepository $categoryRepo, IImageRepository $imageRepo)
     {
         $this->brandRepo = $brandRepo;
         $this->categoryRepo = $categoryRepo;
+        $this->imageRepo = $imageRepo;
     }
 
     public function getProductList()
@@ -67,6 +70,11 @@ class ProductRepository implements IProductRepository
             return response()->json($validator->errors(), 400);
         }
 
+        $request->validate([
+            'images' => 'required',
+            'images.*' => 'required|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
         $user = auth()->user();
         if ($request->get('user_id') != $user->id) {
             return response()->json(['error' => 'Unauthorized'], 401);
@@ -82,28 +90,39 @@ class ProductRepository implements IProductRepository
         $product_details = json_decode($request->get('product_details'), true);
         $stock_quantity = $request->get('stock_quantity');
 
-        $product = new Product([
-            'category_id' => $category_id,
-            'brand_id' => $brand_id,
-            'unit_id' => $unit_id,
-            'price' => $price,
-            'name' => $name,
-            'description' => $description,
-            'has_options' => $has_options,
-            'stock_quantity' => $stock_quantity
-        ]);
-        $product->save();
+        $product = $this->saveProduct($category_id, $brand_id, $unit_id, $price, $name, $description, $has_options, $stock_quantity);
+
+        $images = $request->file('images');
+        if ($images == null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please upload photos',
+                'error' => 'Image upload failed!'
+            ], 500);
+        }
+
+        if (sizeof($images) > 5) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You can upload maximum 5 photos',
+                'error' => 'Image upload failed!'
+            ], 500);
+        }
+        $imageSaveStatus = $this->saveProductImages($images, $product->id);
+        if ($imageSaveStatus == false) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong!',
+                'error' => 'Image upload failed!'
+            ], 500);
+        }
 
         $brand_name = $this->brandRepo->getBrandDetailsById($brand_id)->brand_name;
         $category_name = $this->categoryRepo->getCategoryDetailsById($category_id)->name;
+
         if ($has_options == false) {
             // saving only one sku
-            $stock = new Stock([
-                'product_id' => $product->id,
-                'sku' => $this->generateSku($name, $brand_name, $category_name),
-                'quantity' => $stock_quantity
-            ]);
-            $stock->save();
+            $stock = $this->saveStock($product->id, $this->generateSku($name, $brand_name, $category_name), $stock_quantity);
         } else {
             // saving multiple sku depending on options
             foreach ($product_details as $item) {
@@ -111,20 +130,9 @@ class ProductRepository implements IProductRepository
                 $product_options_details_id = $item['product_options_details_id'];
                 $quantity = $item['quantity'];
 
-                $stock = new Stock([
-                    'product_id' => $product->id,
-                    'sku' => $this->generateSku($name, $brand_name, $category_name),
-                    'quantity' => $quantity
-                ]);
-                $stock->save();
+                $stock = $this->saveStock($product->id, $this->generateSku($name, $brand_name, $category_name), $quantity);
 
-                $productVOption = new ProductVOption([
-                    'product_id' => $product->id,
-                    'product_options_id' => $product_options_id,
-                    'product_options_details_id' => $product_options_details_id,
-                    'stock_id' => $stock->id
-                ]);
-                $productVOption->save();
+                $productVOption = $this->saveProductVOption($product->id, $product_options_id, $product_options_details_id, $stock->id);
             }
         }
 
@@ -293,5 +301,70 @@ class ProductRepository implements IProductRepository
         $updatedStock = DB::table('stocks')
             ->where('id', $stock_id)
             ->update(['quantity' => $updatedQuantity]);
+    }
+
+    public function saveProduct($category_id, $brand_id, $unit_id, $price, $name, $description, $has_options, $stock_quantity)
+    {
+        $product = new Product([
+            'category_id' => $category_id,
+            'brand_id' => $brand_id,
+            'unit_id' => $unit_id,
+            'price' => $price,
+            'name' => $name,
+            'description' => $description,
+            'has_options' => $has_options,
+            'stock_quantity' => $stock_quantity
+        ]);
+        $product->save();
+
+        return $product;
+    }
+
+    public function saveStock($product_id, $sku, $stock_quantity)
+    {
+        $stock = new Stock([
+            'product_id' => $product_id,
+            'sku' => $sku,
+            'quantity' => $stock_quantity
+        ]);
+        $stock->save();
+
+        return $stock;
+    }
+
+    public function saveProductVOption($product_id, $product_options_id, $product_options_details_id, $stock_id)
+    {
+        $productVOption = new ProductVOption([
+            'product_id' => $product_id,
+            'product_options_id' => $product_options_id,
+            'product_options_details_id' => $product_options_details_id,
+            'stock_id' => $stock_id
+        ]);
+        $productVOption->save();
+
+        return $productVOption;
+    }
+
+    public function saveProductVImage($product_id, $image_id)
+    {
+        $productVImage = new ProductVImage([
+            'product_id' => $product_id,
+            'image_id' => $image_id,
+        ]);
+        $productVImage->save();
+
+        return $productVImage;
+    }
+
+    public function saveProductImages($images, $product_id)
+    {
+        foreach ($images as $image) {
+            $saveImage = $this->imageRepo->storeImage($image);
+
+            $this->saveProductVImage($product_id, $saveImage->id);
+            if (is_null($image)) return false;
+        }
+
+        return true;
     }
 }

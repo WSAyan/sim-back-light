@@ -40,7 +40,7 @@ class CategoryRepository implements ICategoryRepository
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+            return response()->json($validator->errors(), 422);
         }
 
         $user = auth()->user();
@@ -56,23 +56,9 @@ class CategoryRepository implements ICategoryRepository
             ], 500);
         }
 
-        $category = new Category([
-            'name' => $request->get('name'),
-            'description' => $request->get('description'),
-        ]);
-        $status = $category->save();
-        if ($status == false) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong!'
-            ], 500);
-        }
+        $category = $this->saveCategory($request->get('name'), $request->get('description'));
 
-        $categoryVImage = new CategoryVImage([
-            'category_id' => $category->id,
-            'image_id' => $image->id,
-        ]);
-        $categoryVImage->save();
+        $categoryVImage = $this->saveCategoryVIImage($category->id, $image->id);
 
         return response()->json([
             'success' => true,
@@ -85,5 +71,27 @@ class CategoryRepository implements ICategoryRepository
         return DB::table('categories')
             ->where('categories.id', $id)
             ->first();
+    }
+
+    public function saveCategory($name, $description)
+    {
+        $category = new Category([
+            'name' => $name,
+            'description' => $description,
+        ]);
+       $category->save();
+
+        return $category;
+    }
+
+    public function saveCategoryVIImage($category_id, $image_id)
+    {
+        $categoryVImage = new CategoryVImage([
+            'category_id' => $category_id,
+            'image_id' => $image_id,
+        ]);
+        $categoryVImage->save();
+
+        return $categoryVImage;
     }
 }
