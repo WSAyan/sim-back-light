@@ -35,4 +35,6 @@ interface IProductRepository
     public function saveProductVImage($product_id, $image_id);
 
     public function saveProductImages($images, $product_id);
+
+    public function getProductImages($product_id);
 }

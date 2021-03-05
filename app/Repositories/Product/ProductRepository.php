@@ -13,6 +13,7 @@ use App\Repositories\Image\IImageRepository;
 use App\Stock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class ProductRepository implements IProductRepository
@@ -199,6 +200,7 @@ class ProductRepository implements IProductRepository
         $result['unit']['unit_name'] = $product->unit_name;
         $result['unit']['is_reminder_allowed'] = $product->unit_reminder_allowed;
         $result['product_options'] = $this->getProductOptionsWithDetails($id);
+        $result['product_images'] = $this->getProductImages($id);
 
         return $result;
     }
@@ -366,5 +368,18 @@ class ProductRepository implements IProductRepository
         }
 
         return true;
+    }
+
+    public function getProductImages($product_id)
+    {
+        $imageUrl = asset('images') . '/';
+
+        $images = DB::table('products_v_images')
+            ->join('images', 'products_v_images.image_id', '=', 'images.id')
+            ->selectRaw("images.id as image_id, images.image as image_name, CONCAT('$imageUrl' , images.image) as image_url")
+            ->where('product_id', $product_id)
+            ->get();
+
+        return $images;
     }
 }
