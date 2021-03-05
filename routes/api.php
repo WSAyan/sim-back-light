@@ -59,3 +59,12 @@ Route::group([
     Route::get('orders', 'OrderController@index');
     Route::get('orders/{id}', 'OrderController@show');
 });
+
+Route::group([
+    'middleware' => ['jwt.verify'],
+    'prefix' => 'brand'
+], function ($router) {
+    Route::post('create', 'BrandController@store');
+    Route::get('brands', 'BrandController@index');
+    Route::get('brands/{id}', 'BrandController@show');
+});
