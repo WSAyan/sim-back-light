@@ -13,7 +13,6 @@ use App\Repositories\Image\IImageRepository;
 use App\Stock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class ProductRepository implements IProductRepository
@@ -29,20 +28,29 @@ class ProductRepository implements IProductRepository
 
     public function getProductList()
     {
-        $products = Product::join('categories', 'categories.id', '=', 'products.category_id')
+        $imageUrl = asset('images') . '/';
+
+        $products = DB::table('products')
+            ->join('categories', 'categories.id', '=', 'products.category_id')
             ->join('brands', 'brands.id', '=', 'products.brand_id')
             ->join('units', 'units.id', '=', 'products.unit_id')
-            ->select(
-                'products.id as product_id',
-                'products.name as product_name',
-                'products.description as product_description',
-                'products.price as product_unit_price',
-                'products.stock_quantity as product_stock_quantity',
-                'categories.name as category_name',
-                'brands.brand_name as brand',
-                'units.unit_name as unit',
-                'units.is_reminder_allowed as unit_reminder_allowed'
+            ->leftJoin('products_v_images', 'products_v_images.product_id', '=', 'products.id')
+            ->leftJoin('images', 'products_v_images.image_id', '=', 'images.id')
+            ->selectRaw(
+                "
+                            products.id as product_id,
+                            products.name as product_name,
+                            products.description as product_description,
+                            products.price as product_unit_price,
+                            products.stock_quantity as product_stock_quantity,
+                            categories.name as category_name,
+                            brands.brand_name as brand,
+                            units.unit_name as unit,
+                            units.is_reminder_allowed as unit_reminder_allowed,
+                            CONCAT('$imageUrl' , images.image) as image_url
+                "
             )
+            ->groupBy('products.id')
             ->orderBy('products.id', 'desc')
             ->paginate(25);
 
