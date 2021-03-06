@@ -99,7 +99,7 @@ class OrderRepository implements IOrderRepository
             ], 400);
         }
 
-        $invoice_id = uniqid('order-');
+        $invoice_id = strtoupper(uniqid('#'));
         $salesperson_user_id = $request->get('salesperson_user_id');
         $customer_user_id = $request->get('customer_user_id');
         $deliveryman_user_id = $request->get('deliveryman_user_id');
@@ -170,7 +170,7 @@ class OrderRepository implements IOrderRepository
     {
         return response()->json([
             'success' => true,
-            'message' => 'Order show test',
+            'message' => 'Showing order details',
             'order' => $this->getOrderDetailsById($id)
         ]);
     }
