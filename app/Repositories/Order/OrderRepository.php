@@ -171,7 +171,80 @@ class OrderRepository implements IOrderRepository
         return response()->json([
             'success' => true,
             'message' => 'Order show test',
-            'order' => null
+            'order' => $this->getOrderDetailsById($id)
         ]);
+    }
+
+    public function getOrderDetailsById($id)
+    {
+        $order = DB::table('orders')
+            ->join('orders_v_products', 'orders.id', '=', 'orders_v_products.order_id')
+            ->join('products', 'orders_v_products.product_id', '=', 'products.id')
+            ->join('categories', 'categories.id', '=', 'products.category_id')
+            ->join('brands', 'brands.id', '=', 'products.brand_id')
+            ->join('units', 'units.id', '=', 'products.unit_id')
+            ->join('stocks', 'orders_v_products.stock_id', '=', 'stocks.id')
+            ->join('products_v_options', 'orders_v_products.stock_id', '=', 'products_v_options.stock_id')
+            ->join('product_options', 'products_v_options.product_options_id', '=', 'product_options.id')
+            ->join('product_options_details', 'products_v_options.product_options_details_id', '=', 'product_options_details.id')
+            ->selectRaw(
+                "
+                            orders.id as id,
+                            orders.invoice_id as invoice_id,
+                            orders.customer_name as customer_name,
+                            orders.customer_phone as customer_phone,
+                            orders.customer_address as customer_address,
+                            orders.delivery_address as delivery_address,
+                            orders.total_price as total_price,
+                            orders.total_payable as total_payable,
+                            orders.total_paid as total_paid,
+                            products.id as product_id,
+                            products.name as product_name,
+                            products.description as product_description,
+                            products.price as product_unit_price,
+                            products.stock_quantity as product_stock_quantity,
+                            categories.name as category_name,
+                            brands.brand_name as brand_name,
+                            units.unit_name as unit,
+                            units.is_reminder_allowed as unit_reminder_allowed,
+                            orders_v_products.order_quantity as order_quantity,
+                            stocks.quantity as current_stock_quantity,
+                            product_options.name as product_options_name,
+                            product_options_details.name as product_options_details
+                "
+            )
+            ->where('orders.id', $id)
+            ->get();
+
+        $result = [];
+        $i = 0;
+        foreach ($order as $item) {
+            $result['id'] = $item->id;
+            $result['invoice_id'] = $item->invoice_id;
+            $result['customer_name'] = $item->customer_name;
+            $result['customer_phone'] = $item->customer_phone;
+            $result['customer_address'] = $item->customer_address;
+            $result['delivery_address'] = $item->delivery_address;
+            $result['total_price'] = $item->total_price;
+            $result['total_payable'] = $item->total_payable;
+            $result['total_paid'] = $item->total_paid;
+
+            $result['ordered_products'][$i]['product_id'] = $item->product_id;
+            $result['ordered_products'][$i]['product_name'] = $item->product_name;
+            $result['ordered_products'][$i]['product_description'] = $item->product_description;
+            $result['ordered_products'][$i]['product_unit_price'] = $item->product_unit_price;
+            $result['ordered_products'][$i]['category_name'] = $item->category_name;
+            $result['ordered_products'][$i]['brand_name'] = $item->brand_name;
+            $result['ordered_products'][$i]['unit'] = $item->unit;
+            $result['ordered_products'][$i]['unit_reminder_allowed'] = $item->unit_reminder_allowed;
+            $result['ordered_products'][$i]['order_quantity'] = $item->order_quantity;
+            $result['ordered_products'][$i]['current_stock_quantity'] = $item->current_stock_quantity;
+            $result['ordered_products'][$i]['product_options_name'] = $item->product_options_name;
+            $result['ordered_products'][$i]['product_options_details'] = $item->product_options_details;
+
+            $i++;
+        }
+
+        return $result;
     }
 }
