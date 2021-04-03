@@ -68,3 +68,10 @@ Route::group([
     Route::get('brands', 'BrandController@index');
     Route::get('brands/{id}', 'BrandController@show');
 });
+
+Route::group([
+    'middleware' => ['jwt.verify'],
+    'prefix' => 'home'
+], function ($router) {
+    Route::get('', 'HomeController@index');
+});
