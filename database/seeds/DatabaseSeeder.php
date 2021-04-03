@@ -10,6 +10,8 @@ use App\ProductOption;
 use App\ProductOptionsDetail;
 use App\Role;
 use App\RoleVUser;
+use App\Screen;
+use App\ScreenType;
 use App\Tax;
 use App\User;
 use App\Unit;
@@ -48,6 +50,10 @@ class DatabaseSeeder extends Seeder
         $this->insertProductOptions();
 
         $this->insertProductOptionsDetails();
+
+        $this->insertScreenTypes();
+
+        $this->insertScreens();
     }
 
     private function insertRoles()
@@ -321,6 +327,60 @@ class DatabaseSeeder extends Seeder
         $color_option_yellow = ProductOptionsDetail::create([
             'product_options_id' => 2,
             'name' => 'Yellow'
+        ]);
+    }
+
+    private function insertScreenTypes()
+    {
+        $row = ScreenType::create([
+            'screen_type' => 'drawer_menu'
+        ]);
+
+        $row = ScreenType::create([
+            'screen_type' => 'common'
+        ]);
+
+        $row = ScreenType::create([
+            'screen_type' => 'toolbar_menu'
+        ]);
+
+        $row = ScreenType::create([
+            'screen_type' => 'bottom_menu'
+        ]);
+    }
+
+    private function insertScreens()
+    {
+        $row = Screen::create([
+            'screen_name' => 'Dashboard'
+        ]);
+
+        $row = Screen::create([
+            'screen_name' => 'Users'
+        ]);
+
+        $row = Screen::create([
+            'screen_name' => 'Orders'
+        ]);
+
+        $row = Screen::create([
+            'screen_name' => 'Brands'
+        ]);
+
+        $row = Screen::create([
+            'screen_name' => 'Categories'
+        ]);
+
+        $row = Screen::create([
+            'screen_name' => 'Products'
+        ]);
+
+        $row = Screen::create([
+            'screen_name' => 'Reports'
+        ]);
+
+        $row = Screen::create([
+            'screen_name' => 'Settings'
         ]);
     }
 }
