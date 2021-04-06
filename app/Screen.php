@@ -9,6 +9,6 @@ class Screen extends Model
     protected $table = 'screens';
 
     protected $fillable = [
-        'screen_name'
+        'screen_name', 'route', 'icon'
     ];
 }

@@ -337,6 +337,10 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $row = ScreenType::create([
+            'screen_type' => 'sub_menu'
+        ]);
+
+        $row = ScreenType::create([
             'screen_type' => 'common'
         ]);
 
@@ -352,35 +356,51 @@ class DatabaseSeeder extends Seeder
     private function insertScreens()
     {
         $row = Screen::create([
-            'screen_name' => 'Dashboard'
+            'screen_name' => 'Dashboard',
+            'route' => 'user/dashboard',
+            'icon' => 'view-dashboard'
         ]);
 
         $row = Screen::create([
-            'screen_name' => 'Users'
+            'screen_name' => 'Users',
+            'route' => 'users',
+            'icon' => 'account-group'
         ]);
 
         $row = Screen::create([
-            'screen_name' => 'Orders'
+            'screen_name' => 'Orders',
+            'route' => 'order/orders',
+            'icon' => 'cart'
         ]);
 
         $row = Screen::create([
-            'screen_name' => 'Brands'
+            'screen_name' => 'Brands',
+            'route' => 'brand/brands',
+            'icon' => 'palette-swatch'
         ]);
 
         $row = Screen::create([
-            'screen_name' => 'Categories'
+            'screen_name' => 'Categories',
+            'route' => 'category/categories',
+            'icon' => 'label'
         ]);
 
         $row = Screen::create([
-            'screen_name' => 'Products'
+            'screen_name' => 'Products',
+            'route' => 'product/products',
+            'icon' => 'semantic-web'
         ]);
 
         $row = Screen::create([
-            'screen_name' => 'Reports'
+            'screen_name' => 'Reports',
+            'route' => 'report/reports',
+            'icon' => 'chart-box'
         ]);
 
         $row = Screen::create([
-            'screen_name' => 'Settings'
+            'screen_name' => 'Settings',
+            'route' => 'settings',
+            'icon' => 'cog'
         ]);
     }
 }
