@@ -12,8 +12,8 @@ class JwtMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
@@ -21,21 +21,21 @@ class JwtMiddleware
         try {
             $user = JWTAuth::parseToken()->authenticate();
         } catch (Exception $e) {
-            if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenInvalidException){
+            if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenInvalidException) {
                 return response()->json([
                     'success' => false,
                     'error' => 'Token is Invalid'
-                    ]);
-            }else if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenExpiredException){
+                ], 401);
+            } else if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenExpiredException) {
                 return response()->json([
                     'success' => false,
                     'error' => 'Token is Expired'
-                    ]);
-            }else{
+                ], 401);
+            } else {
                 return response()->json([
                     'success' => false,
                     'error' => 'Authorization Token not found'
-                    ]);
+                ], 401);
             }
         }
         return $next($request);
