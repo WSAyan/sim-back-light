@@ -357,49 +357,49 @@ class DatabaseSeeder extends Seeder
     {
         $row = Screen::create([
             'screen_name' => 'Dashboard',
-            'route' => 'user/dashboard',
+            'route' => '/user/dashboard',
             'icon' => 'view-dashboard'
         ]);
 
         $row = Screen::create([
             'screen_name' => 'Users',
-            'route' => 'users',
+            'route' => '/users',
             'icon' => 'account-group'
         ]);
 
         $row = Screen::create([
             'screen_name' => 'Orders',
-            'route' => 'order/orders',
+            'route' => '/order/orders',
             'icon' => 'cart'
         ]);
 
         $row = Screen::create([
             'screen_name' => 'Brands',
-            'route' => 'brand/brands',
+            'route' => '/brand/brands',
             'icon' => 'palette-swatch'
         ]);
 
         $row = Screen::create([
             'screen_name' => 'Categories',
-            'route' => 'category/categories',
+            'route' => '/category/categories',
             'icon' => 'label'
         ]);
 
         $row = Screen::create([
             'screen_name' => 'Products',
-            'route' => 'product/products',
+            'route' => '/product/products',
             'icon' => 'semantic-web'
         ]);
 
         $row = Screen::create([
             'screen_name' => 'Reports',
-            'route' => 'report/reports',
+            'route' => '/report/reports',
             'icon' => 'chart-box'
         ]);
 
         $row = Screen::create([
             'screen_name' => 'Settings',
-            'route' => 'settings',
+            'route' => '/settings',
             'icon' => 'cog'
         ]);
     }
