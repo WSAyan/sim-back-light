@@ -79,7 +79,7 @@ class CategoryRepository implements ICategoryRepository
             'name' => $name,
             'description' => $description,
         ]);
-       $category->save();
+        $category->save();
 
         return $category;
     }
