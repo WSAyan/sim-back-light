@@ -20,7 +20,7 @@ interface ICategoryRepository
 
     public function updateCategory(Request $request, $id);
 
-    public function updateCategoryDetails($id, $image, $name, $description);
+    public function updateCategoryWithImage($id, $image, $name, $description);
 
     public function deleteCategoryVIImage($category_id, $image_id);
 

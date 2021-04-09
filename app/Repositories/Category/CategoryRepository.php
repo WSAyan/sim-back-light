@@ -101,7 +101,7 @@ class CategoryRepository implements ICategoryRepository
             'user_id' => 'required',
             'name' => 'required|string',
             'description' => 'required|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -113,15 +113,17 @@ class CategoryRepository implements ICategoryRepository
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $image = $this->imageRepo->storeImage($request->file('image'));
-        if (is_null($image)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong!'
-            ], 500);
+        $name = $request->get('name');
+        $description = $request->get('description');
+        $image = $request->file('image');
+
+        $category = null;
+        if (is_null($image) || empty($image)) {
+            $category = $this->updateCategoryWithoutImage($id, $name, $description);
+        } else {
+            $category = $this->updateCategoryWithImage($id, $image, $name, $description);
         }
 
-        $category = $this->updateCategoryDetails($id, $image, $request->get('name'), $request->get('description'));
         if (is_null($category)) {
             return response()->json([
                 'success' => false,
@@ -136,10 +138,28 @@ class CategoryRepository implements ICategoryRepository
         ], 200);
     }
 
-    public function updateCategoryDetails($id, $image, $name, $description)
+    public function updateCategoryWithImage($id, $image, $name, $description)
     {
-        $this->updateCategoryVImage($id, $image->id);
+        $imageData = $this->getCategoryImage($id);
 
+        $imageData = $this->imageRepo->updateImageFromStorageById($imageData->id, $image);
+
+        if (is_null($imageData)) return null;
+
+        DB::table('categories')
+            ->where('categories.id', $id)
+            ->update(
+                [
+                    'name' => $name,
+                    'description' => $description
+                ]
+            );
+
+        return $this->getCategoryDetailsById($id);
+    }
+
+    public function updateCategoryWithoutImage($id, $name, $description)
+    {
         DB::table('categories')
             ->where('categories.id', $id)
             ->update(
@@ -169,10 +189,15 @@ class CategoryRepository implements ICategoryRepository
 
     public function updateCategoryVImage($category_id, $image_id)
     {
-        $categoryVImage = $this->getCategoryImage($category_id);
+        DB::table('categories_v_images')
+            ->where('categories_v_images.category_id', $category_id)
+            ->update(
+                [
+                    'category_id' => $category_id,
+                    'image_id' => $image_id
+                ]
+            );
 
-        $this->deleteCategoryVIImage($categoryVImage->category_id, $categoryVImage->image_id);
-
-        return $this->saveCategoryVIImage($category_id, $image_id);
+        return $this->getCategoryImage($category_id);
     }
 }
