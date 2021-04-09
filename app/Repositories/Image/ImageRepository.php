@@ -54,7 +54,7 @@ class ImageRepository implements IImageRepository
 
         $fileName = $image->image;
 
-        return Storage::delete("images/".$fileName);
+        return Storage::delete("images/" . $fileName);
     }
 
     public function updateImageFromStorageById($imageId, $postedImage)
@@ -74,5 +74,16 @@ class ImageRepository implements IImageRepository
             );
 
         return $this->getImage($imageId);
+    }
+
+    public function deleteImageById($imageId)
+    {
+        $status = $this->deleteImageFromStorageById($imageId);
+
+        if ($status == false) return false;
+
+        return DB::table('images')
+            ->where('images.id', $imageId)
+            ->delete();
     }
 }

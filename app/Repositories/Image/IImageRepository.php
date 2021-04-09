@@ -17,4 +17,6 @@ interface IImageRepository
     public function updateImageFromStorageById($imageId, $postedImage);
 
     public function getImage($id);
+
+    public function deleteImageById($imageId);
 }

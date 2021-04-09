@@ -264,4 +264,38 @@ class CategoryRepository implements ICategoryRepository
 
         return $this->getCategoryImage($category_id);
     }
+
+    public function deleteCategory($category_id)
+    {
+        $categoryImage = $this->getCategoryImage($category_id);
+
+        $status = $this->deleteCategoryVIImage($category_id, $categoryImage->id);
+
+        if ($status == false) return false;
+
+        $status = $this->imageRepo->deleteImageById($categoryImage->id);
+
+        if ($status == false) return false;
+
+        return DB::table('categories')
+            ->where('categories.id', $category_id)
+            ->delete();
+    }
+
+    public function destroyCategory($category_id)
+    {
+        $status = $this->deleteCategory($category_id);
+
+        if ($status == false) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong!'
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Category successfully deleted'
+        ], 201);
+    }
 }

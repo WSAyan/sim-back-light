@@ -33,4 +33,8 @@ interface ICategoryRepository
     public function getCategoryListWithDetails();
 
     public function getCategoryById($id);
+
+    public function deleteCategory($category_id);
+
+    public function destroyCategory($category_id);
 }
