@@ -22,12 +22,41 @@ class CategoryRepository implements ICategoryRepository
 
     public function getCategoryList()
     {
-        $categories = DB::table('categories')->paginate(25);
+        $imageUrl = asset('images') . '/';
+
+        $categories = DB::table('categories')
+            ->leftJoin('categories_v_images', 'categories.id', '=', 'categories_v_images.category_id')
+            ->leftJoin('images', 'categories_v_images.image_id', '=', 'images.id')
+            ->selectRaw(
+                "categories.id as id,
+                categories.name as name,
+                categories.description as description,
+                CONCAT('$imageUrl' , images.image) as image_url"
+            )
+            ->orderBy('categories.id')
+            ->paginate(25);
+
         return response()->json([
             'success' => true,
             'message' => 'Category list generated',
             'categories' => $categories
         ]);
+    }
+
+    public function getCategoryListWithDetails()
+    {
+        return DB::table('categories')
+            ->leftJoin('categories_v_images', 'categories.id', '=', 'categories_v_images.category_id')
+            ->leftJoin('images', 'categories_v_images.image_id', '=', 'images.id')
+            ->select
+            (
+                'categories.id as id',
+                'categories.name as name',
+                'categories.description as description',
+                'images.id as image_id',
+                'images.image as image'
+            )
+            ->get();
     }
 
     public function storeCategory(Request $request)
@@ -68,8 +97,43 @@ class CategoryRepository implements ICategoryRepository
 
     public function getCategoryDetailsById($id)
     {
-        return DB::table('categories')
+        $category = DB::table('categories')
             ->where('categories.id', $id)
+            ->first();
+
+        $categoryVImage = $this->getCategoryImage($id);
+        if (is_null($categoryVImage)) return null;
+
+        $image = $this->imageRepo->getImage($categoryVImage->image_id);
+
+        $categoryDetails = [];
+        $categoryDetails['id'] = $category->id;
+        $categoryDetails['name'] = $category->name;
+        $categoryDetails['description'] = $category->description;
+        $categoryDetails['image']['id'] = $image->id;
+        $categoryDetails['image']['name'] = $image->image;
+        $categoryDetails['image']['image_url'] = asset('images/' . $image->image);
+
+        return $categoryDetails;
+    }
+
+    public function getCategoryById($id)
+    {
+        $imageUrl = asset('images') . '/';
+
+        return DB::table('categories')
+            ->leftJoin('categories_v_images', 'categories.id', '=', 'categories_v_images.category_id')
+            ->leftJoin('images', 'categories_v_images.image_id', '=', 'images.id')
+            ->selectRaw
+            (
+                "
+                categories.id as id,
+                categories.name as name,
+                categories.description as description,
+                CONCAT('$imageUrl' , images.image) as image_url
+                "
+            )
+            ->where('categories.id', '=', $id)
             ->first();
     }
 
@@ -155,7 +219,7 @@ class CategoryRepository implements ICategoryRepository
                 ]
             );
 
-        return $this->getCategoryDetailsById($id);
+        return $this->getCategoryById($id);
     }
 
     public function updateCategoryWithoutImage($id, $name, $description)
@@ -169,7 +233,7 @@ class CategoryRepository implements ICategoryRepository
                 ]
             );
 
-        return $this->getCategoryDetailsById($id);
+        return $this->getCategoryById($id);
     }
 
     public function deleteCategoryVIImage($category_id, $image_id)

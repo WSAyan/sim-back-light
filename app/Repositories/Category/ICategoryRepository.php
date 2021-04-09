@@ -27,4 +27,10 @@ interface ICategoryRepository
     public function getCategoryImage($category_id);
 
     public function updateCategoryVImage($category_id, $image_id);
+
+    public function updateCategoryWithoutImage($id, $name, $description);
+
+    public function getCategoryListWithDetails();
+
+    public function getCategoryById($id);
 }
