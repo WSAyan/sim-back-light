@@ -20,8 +20,18 @@ class CategoryRepository implements ICategoryRepository
         $this->imageRepo = $imageRepo;
     }
 
-    public function getCategoryList()
+    public function getCategoryList(Request $request)
     {
+        $size = $request->get('size');
+        if (is_null($size) || empty($size)) {
+            $size = 5;
+        }
+
+        $query = $request->get('query');
+        if (is_null($query) || empty($query)) {
+            $query = "";
+        }
+
         $imageUrl = asset('images') . '/';
 
         $categories = DB::table('categories')
@@ -33,8 +43,9 @@ class CategoryRepository implements ICategoryRepository
                 categories.description as description,
                 CONCAT('$imageUrl' , images.image) as image_url"
             )
+            ->where('categories.name', 'LIKE', "%{$query}%")
             ->orderBy('categories.id')
-            ->paginate(25);
+            ->paginate($size);
 
         return response()->json([
             'success' => true,
@@ -162,7 +173,6 @@ class CategoryRepository implements ICategoryRepository
     public function updateCategory(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required',
             'name' => 'required|string',
             'description' => 'required|string',
             'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
@@ -170,11 +180,6 @@ class CategoryRepository implements ICategoryRepository
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
-        }
-
-        $user = auth()->user();
-        if ($request->get('user_id') != $user->id) {
-            return response()->json(['error' => 'Unauthorized'], 401);
         }
 
         $name = $request->get('name');

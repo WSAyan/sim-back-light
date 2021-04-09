@@ -38,7 +38,7 @@ Route::group([
 
     // category
     Route::post('categories', 'CategoryController@store');
-    Route::get('categories', 'CategoryController@index');
+    Route::get('categories', 'CategoryController@showCategoryList');
     Route::get('categories/{id}', 'CategoryController@show');
     Route::put('categories/{id}', 'CategoryController@update');
     Route::delete('categories/{id}', 'CategoryController@destroy');

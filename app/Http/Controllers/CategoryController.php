@@ -14,9 +14,14 @@ class CategoryController extends Controller
         $this->categoryRepo = $categoryRepo;
     }
 
-    public function index()
+   /* public function index()
     {
         return $this->categoryRepo->getCategoryList();
+    }*/
+
+    public function showCategoryList(Request $request)
+    {
+        return $this->categoryRepo->getCategoryList($request);
     }
 
     public function store(Request $request)

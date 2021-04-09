@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 interface ICategoryRepository
 {
-    public function getCategoryList();
+    public function getCategoryList(Request $request);
 
     public function storeCategory(Request $request);
 
