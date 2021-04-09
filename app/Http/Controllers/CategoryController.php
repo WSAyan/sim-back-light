@@ -37,12 +37,12 @@ class CategoryController extends Controller
 
     public function update(Request $request, $id)
     {
-
+        return $this->categoryRepo->updateCategory($request, $id);
     }
 
 
     public function destroy($id)
     {
-
+        return $this->categoryRepo->destroyCategory($id);
     }
 }

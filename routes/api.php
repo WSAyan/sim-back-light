@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::group([
     'middleware' => 'api',
-    'prefix' => 'auth'
+    'prefix' => 'v1/auth'
 ], function ($router) {
     Route::post('login', 'AuthController@login');
     Route::post('register', 'AuthController@register');
@@ -27,51 +27,41 @@ Route::group([
 
 Route::group([
     'middleware' => ['jwt.verify'],
-    'prefix' => 'counter'
+    'prefix' => 'v1/inventory'
 ], function ($router) {
-    Route::post('create', 'CounterController@store');
-    Route::get('invoices', 'CounterController@index');
-});
+    // home
+    Route::get('app-data', 'HomeController@appData');
 
-Route::group([
-    'middleware' => ['jwt.verify'],
-    'prefix' => 'category'
-], function ($router) {
-    Route::post('create', 'CategoryController@store');
+    // counter
+    Route::post('counter/create', 'CounterController@store');
+    Route::get('counter/invoices', 'CounterController@index');
+
+    // category
+    Route::post('categories', 'CategoryController@store');
     Route::get('categories', 'CategoryController@index');
     Route::get('categories/{id}', 'CategoryController@show');
-});
+    Route::put('categories/{id}', 'CategoryController@update');
+    Route::delete('categories/{id}', 'CategoryController@destroy');
 
-Route::group([
-    'middleware' => ['jwt.verify'],
-    'prefix' => 'product'
-], function ($router) {
-    Route::post('create', 'ProductController@store');
+    // product
+    Route::post('products', 'ProductController@store');
     Route::get('products', 'ProductController@index');
     Route::get('products/{id}', 'ProductController@show');
-});
+    Route::put('products/{id}', 'ProductController@update');
+    Route::delete('products/{id}', 'ProductController@destroy');
 
-Route::group([
-    'middleware' => ['jwt.verify'],
-    'prefix' => 'order'
-], function ($router) {
-    Route::post('create', 'OrderController@store');
+    // order
+    Route::post('orders', 'OrderController@store');
     Route::get('orders', 'OrderController@index');
     Route::get('orders/{id}', 'OrderController@show');
-});
+    Route::put('orders/{id}', 'OrderController@update');
+    Route::delete('orders/{id}', 'OrderController@destroy');
 
-Route::group([
-    'middleware' => ['jwt.verify'],
-    'prefix' => 'brand'
-], function ($router) {
+    // brand
     Route::post('create', 'BrandController@store');
     Route::get('brands', 'BrandController@index');
     Route::get('brands/{id}', 'BrandController@show');
+    Route::put('brands/{id}', 'BrandController@update');
+    Route::delete('brands/{id}', 'BrandController@destroy');
 });
 
-Route::group([
-    'middleware' => ['jwt.verify'],
-    'prefix' => 'home'
-], function ($router) {
-    Route::get('', 'HomeController@index');
-});

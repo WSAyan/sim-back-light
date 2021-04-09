@@ -17,6 +17,11 @@ class HomeController extends Controller
 
     public function index()
     {
+
+    }
+
+    public function appData()
+    {
         return $this->homeRepo->getAppData();
     }
 }
