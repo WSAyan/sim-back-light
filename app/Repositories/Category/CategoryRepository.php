@@ -172,7 +172,7 @@ class CategoryRepository implements ICategoryRepository
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, 'Validation failed', $validator->errors()->all());
         }
 
         $name = $request->get('name');
