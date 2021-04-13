@@ -4,6 +4,8 @@
 namespace App\Repositories\Image;
 
 
+use Illuminate\Http\Request;
+
 interface IImageRepository
 {
     public function storeImage($postedImage);
@@ -19,4 +21,13 @@ interface IImageRepository
     public function getImage($id);
 
     public function deleteImageById($imageId);
+
+    public function storeImageRequest(Request $request);
+
+    public function deleteImageRequest($id);
+
+    public function updateImageRequest(Request $request, $id);
+
+    public function getImageList(Request $request);
+
 }

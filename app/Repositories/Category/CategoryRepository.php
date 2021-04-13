@@ -7,6 +7,7 @@ namespace App\Repositories\Category;
 use App\Category;
 use App\CategoryVImage;
 use App\Repositories\Image\IImageRepository;
+use App\Utils\ResponseFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -20,8 +21,18 @@ class CategoryRepository implements ICategoryRepository
         $this->imageRepo = $imageRepo;
     }
 
-    public function getCategoryList()
+    public function getCategoryList(Request $request)
     {
+        $size = $request->get('size');
+        if (is_null($size) || empty($size)) {
+            $size = 5;
+        }
+
+        $query = $request->get('query');
+        if (is_null($query) || empty($query)) {
+            $query = "";
+        }
+
         $imageUrl = asset('images') . '/';
 
         $categories = DB::table('categories')
@@ -33,8 +44,9 @@ class CategoryRepository implements ICategoryRepository
                 categories.description as description,
                 CONCAT('$imageUrl' , images.image) as image_url"
             )
+            ->where('categories.name', 'LIKE', "%{$query}%")
             ->orderBy('categories.id')
-            ->paginate(25);
+            ->paginate($size);
 
         return response()->json([
             'success' => true,
@@ -62,27 +74,18 @@ class CategoryRepository implements ICategoryRepository
     public function storeCategory(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required',
             'name' => 'required|string',
             'description' => 'required|string',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        $user = auth()->user();
-        if ($request->get('user_id') != $user->id) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, 'Validation failed', $validator->errors()->all());
         }
 
         $image = $this->imageRepo->storeImage($request->file('image'));
         if (is_null($image)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong!'
-            ], 500);
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, ERROR_TYPE_COMMON, null);
         }
 
         $category = $this->saveCategory($request->get('name'), $request->get('description'));
@@ -91,7 +94,8 @@ class CategoryRepository implements ICategoryRepository
 
         return response()->json([
             'success' => true,
-            'message' => 'Category successfully created'
+            'message' => 'Category successfully created',
+            'category' => $this->getCategoryById($category->id)
         ], 201);
     }
 
@@ -162,19 +166,13 @@ class CategoryRepository implements ICategoryRepository
     public function updateCategory(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required',
             'name' => 'required|string',
             'description' => 'required|string',
             'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        $user = auth()->user();
-        if ($request->get('user_id') != $user->id) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, 'Validation failed', $validator->errors()->all());
         }
 
         $name = $request->get('name');
@@ -189,10 +187,7 @@ class CategoryRepository implements ICategoryRepository
         }
 
         if (is_null($category)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong!'
-            ], 500);
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, ERROR_TYPE_COMMON, null);
         }
 
         return response()->json([
@@ -287,15 +282,12 @@ class CategoryRepository implements ICategoryRepository
         $status = $this->deleteCategory($category_id);
 
         if ($status == false) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong!'
-            ], 500);
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, ERROR_TYPE_COMMON, null);
         }
 
         return response()->json([
             'success' => true,
             'message' => 'Category successfully deleted'
-        ], 201);
+        ], 200);
     }
 }

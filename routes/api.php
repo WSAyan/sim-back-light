@@ -38,7 +38,7 @@ Route::group([
 
     // category
     Route::post('categories', 'CategoryController@store');
-    Route::get('categories', 'CategoryController@index');
+    Route::get('categories', 'CategoryController@showCategoryList');
     Route::get('categories/{id}', 'CategoryController@show');
     Route::put('categories/{id}', 'CategoryController@update');
     Route::delete('categories/{id}', 'CategoryController@destroy');
@@ -58,10 +58,17 @@ Route::group([
     Route::delete('orders/{id}', 'OrderController@destroy');
 
     // brand
-    Route::post('create', 'BrandController@store');
+    Route::post('brands', 'BrandController@store');
     Route::get('brands', 'BrandController@index');
     Route::get('brands/{id}', 'BrandController@show');
     Route::put('brands/{id}', 'BrandController@update');
     Route::delete('brands/{id}', 'BrandController@destroy');
+
+    // image
+    Route::post('images', 'ImageController@store');
+    Route::get('images', 'ImageController@showImageList');
+    Route::get('images/{id}', 'ImageController@show');
+    Route::put('images/{id}', 'ImageController@update');
+    Route::delete('images/{id}', 'ImageController@destroy');
 });
 

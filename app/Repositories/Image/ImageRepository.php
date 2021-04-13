@@ -5,11 +5,40 @@ namespace App\Repositories\Image;
 
 
 use App\Image;
+use App\Utils\ResponseFormatter;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class ImageRepository implements IImageRepository
 {
+    public function storeImageRequest(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, 'Validation failed', $validator->errors()->all());
+        }
+
+        $postedImage = $request->file('image');
+
+        $image = $this->storeImage($postedImage);
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_CREATE, "Upload successful", $image, "image", true);
+    }
+
+    public function deleteImageRequest($id)
+    {
+        $status = $this->deleteImageById($id);
+
+        if ($status == false) return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, "Image deleted", null, null, false);
+    }
+
     public function getImage($id)
     {
         return DB::table('images')
@@ -30,7 +59,12 @@ class ImageRepository implements IImageRepository
             return null;
         }
 
-        return $image;
+        $result = [];
+        $result['id'] = $image->id;
+        $result['name'] = $image->image;
+        $result['url'] = asset('images') . '/' . $image->image;
+
+        return $result;
     }
 
     public function writeInStorage($postedImage)
@@ -85,5 +119,58 @@ class ImageRepository implements IImageRepository
         return DB::table('images')
             ->where('images.id', $imageId)
             ->delete();
+    }
+
+    public function updateImageRequest(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, 'Validation failed', $validator->errors()->all());
+        }
+
+        $postedImage = $request->file('image');
+
+        $image = $this->updateImageFromStorageById($id, $postedImage);
+
+        if (is_null($image)) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
+        }
+
+        $result = [];
+        $result['id'] = $image->id;
+        $result['name'] = $image->image;
+        $result['url'] = asset('images') . '/' . $image->image;
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_CREATE, "Image updated", $result, "image", true);
+    }
+
+    public function getImageList(Request $request)
+    {
+        $size = $request->get('size');
+        if (is_null($size) || empty($size)) {
+            $size = 5;
+        }
+
+        $query = $request->get('query');
+        if (is_null($query) || empty($query)) {
+            $query = "";
+        }
+
+        $imageUrl = asset('images') . '/';
+
+        $images = DB::table('images')
+            ->selectRaw(
+                "images.id as id,
+                images.image as name,
+                CONCAT('$imageUrl' , images.image) as image_url"
+            )
+            ->where('images.image', 'LIKE', "%{$query}%")
+            ->orderBy('images.id')
+            ->paginate($size);
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, "Image list generated", $images, "images", true);
     }
 }
