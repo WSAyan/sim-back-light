@@ -12,8 +12,6 @@ interface ICategoryRepository
 
     public function storeCategory(Request $request);
 
-    public function getCategoryDetailsById($id);
-
     public function saveCategory($name, $description);
 
     public function saveCategoryVIImage($category_id, $image_id);
@@ -22,7 +20,7 @@ interface ICategoryRepository
 
     public function updateCategoryWithImage($id, $image, $name, $description);
 
-    public function deleteCategoryVIImage($category_id, $image_id);
+    public function deleteCategoryVIImage($category_id);
 
     public function getCategoryImage($category_id);
 
@@ -37,4 +35,6 @@ interface ICategoryRepository
     public function deleteCategory($category_id);
 
     public function destroyCategory($category_id);
+
+    public function saveCategoryWithImage($name, $description, $imageId);
 }

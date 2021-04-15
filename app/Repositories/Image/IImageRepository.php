@@ -30,4 +30,11 @@ interface IImageRepository
 
     public function getImageList(Request $request);
 
+    public function deleteCategoryImage($imageId);
+
+    public function deleteProductImage($imageId);
+
+    public function deleteBrandImage($imageId);
+
+    public function getAllImagesById($id);
 }

@@ -33,25 +33,21 @@ class CategoryRepository implements ICategoryRepository
             $query = "";
         }
 
-        $imageUrl = asset('images') . '/';
-
         $categories = DB::table('categories')
-            ->leftJoin('categories_v_images', 'categories.id', '=', 'categories_v_images.category_id')
-            ->leftJoin('images', 'categories_v_images.image_id', '=', 'images.id')
             ->selectRaw(
                 "categories.id as id,
                 categories.name as name,
-                categories.description as description,
-                CONCAT('$imageUrl' , images.image) as image_url"
+                categories.description as description"
             )
             ->where('categories.name', 'LIKE', "%{$query}%")
             ->orderBy('categories.id')
-            ->paginate($size);
+            ->paginate($size)
+            ->toArray();
 
         return response()->json([
             'success' => true,
             'message' => 'Category list generated',
-            'categories' => $categories
+            'categories' => $this->formatCategories($categories)
         ]);
     }
 
@@ -76,69 +72,70 @@ class CategoryRepository implements ICategoryRepository
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
             'description' => 'required|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image_id' => 'required'
         ]);
 
         if ($validator->fails()) {
             return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, 'Validation failed', $validator->errors()->all());
         }
 
-        $image = $this->imageRepo->storeImage($request->file('image'));
-        if (is_null($image)) {
-            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, ERROR_TYPE_COMMON, null);
+        $name = $request->get('name');
+        $description = $request->get('description');
+        $imageId = $request->get('image_id');
+
+        $category = $this->saveCategoryWithImage($name, $description, $imageId);
+
+        if (is_null($category)) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
         }
-
-        $category = $this->saveCategory($request->get('name'), $request->get('description'));
-
-        $categoryVImage = $this->saveCategoryVIImage($category->id, $image->id);
 
         return response()->json([
             'success' => true,
             'message' => 'Category successfully created',
-            'category' => $this->getCategoryById($category->id)
+            'category' => $category
         ], 201);
     }
 
-    public function getCategoryDetailsById($id)
+    /**
+     * format single category item
+     * @param $category
+     * @return array
+     */
+    private function formatCategory($category)
     {
-        $category = DB::table('categories')
-            ->where('categories.id', $id)
-            ->first();
-
-        $categoryVImage = $this->getCategoryImage($id);
-        if (is_null($categoryVImage)) return null;
-
-        $image = $this->imageRepo->getImage($categoryVImage->image_id);
-
         $categoryDetails = [];
         $categoryDetails['id'] = $category->id;
         $categoryDetails['name'] = $category->name;
         $categoryDetails['description'] = $category->description;
-        $categoryDetails['image']['id'] = $image->id;
-        $categoryDetails['image']['name'] = $image->image;
-        $categoryDetails['image']['image_url'] = asset('images/' . $image->image);
+        $categoryDetails['images'] = $this->getCategoryImage($category->id);
 
         return $categoryDetails;
     }
 
+    /**
+     * formats category list for response
+     * @param $categories
+     * @return mixed
+     */
+    private function formatCategories($categories)
+    {
+        $data = $categories['data'];
+        $i = 0;
+        foreach ($data as $item) {
+            $categories['data'][$i] = $this->formatCategory($item);
+            $i++;
+        }
+
+        return $categories;
+    }
+
     public function getCategoryById($id)
     {
-        $imageUrl = asset('images') . '/';
-
-        return DB::table('categories')
-            ->leftJoin('categories_v_images', 'categories.id', '=', 'categories_v_images.category_id')
-            ->leftJoin('images', 'categories_v_images.image_id', '=', 'images.id')
-            ->selectRaw
-            (
-                "
-                categories.id as id,
-                categories.name as name,
-                categories.description as description,
-                CONCAT('$imageUrl' , images.image) as image_url
-                "
-            )
+        $category = DB::table('categories')
             ->where('categories.id', '=', $id)
             ->first();
+
+        return $this->formatCategory($category);
     }
 
     public function saveCategory($name, $description)
@@ -150,6 +147,19 @@ class CategoryRepository implements ICategoryRepository
         $category->save();
 
         return $category;
+    }
+
+    public function saveCategoryWithImage($name, $description, $imageId)
+    {
+        $category = new Category([
+            'name' => $name,
+            'description' => $description,
+        ]);
+        $category->save();
+
+        $this->saveCategoryVIImage($category->id, $imageId);
+
+        return $this->getCategoryById($category->id);
     }
 
     public function saveCategoryVIImage($category_id, $image_id)
@@ -168,7 +178,6 @@ class CategoryRepository implements ICategoryRepository
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
             'description' => 'required|string',
-            'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -177,33 +186,25 @@ class CategoryRepository implements ICategoryRepository
 
         $name = $request->get('name');
         $description = $request->get('description');
-        $image = $request->file('image');
+        $imageId = $request->get('image_id');
 
         $category = null;
-        if (is_null($image) || empty($image)) {
+        if (is_null($imageId) || empty($imageId)) {
             $category = $this->updateCategoryWithoutImage($id, $name, $description);
         } else {
-            $category = $this->updateCategoryWithImage($id, $image, $name, $description);
+            $category = $this->updateCategoryWithImage($id, $imageId, $name, $description);
         }
 
         if (is_null($category)) {
-            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, ERROR_TYPE_COMMON, null);
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Category successfully updated',
-            'category' => $category
-        ], 200);
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Category successfully updated', $category, 'category', true);
     }
 
-    public function updateCategoryWithImage($id, $image, $name, $description)
+    public function updateCategoryWithImage($id, $imageId, $name, $description)
     {
-        $imageData = $this->getCategoryImage($id);
-
-        $imageData = $this->imageRepo->updateImageFromStorageById($imageData->id, $image);
-
-        if (is_null($imageData)) return null;
+        $this->updateCategoryVImage($id, $imageId);
 
         DB::table('categories')
             ->where('categories.id', $id)
@@ -231,24 +232,27 @@ class CategoryRepository implements ICategoryRepository
         return $this->getCategoryById($id);
     }
 
-    public function deleteCategoryVIImage($category_id, $image_id)
+    public function deleteCategoryVIImage($category_id)
     {
         return DB::table('categories_v_images')
             ->where('categories_v_images.category_id', $category_id)
-            ->where('categories_v_images.image_id', $image_id)
             ->delete();
     }
 
     public function getCategoryImage($category_id)
     {
-        return DB::table('categories_v_images')
+        $categoryVImage = DB::table('categories_v_images')
             ->where('categories_v_images.category_id', $category_id)
             ->first();
+
+        if (is_null($categoryVImage)) return [];
+
+        return $this->imageRepo->getAllImagesById($categoryVImage->image_id);
     }
 
     public function updateCategoryVImage($category_id, $image_id)
     {
-        DB::table('categories_v_images')
+        return DB::table('categories_v_images')
             ->where('categories_v_images.category_id', $category_id)
             ->update(
                 [
@@ -256,21 +260,11 @@ class CategoryRepository implements ICategoryRepository
                     'image_id' => $image_id
                 ]
             );
-
-        return $this->getCategoryImage($category_id);
     }
 
     public function deleteCategory($category_id)
     {
-        $categoryImage = $this->getCategoryImage($category_id);
-
-        $status = $this->deleteCategoryVIImage($category_id, $categoryImage->id);
-
-        if ($status == false) return false;
-
-        $status = $this->imageRepo->deleteImageById($categoryImage->id);
-
-        if ($status == false) return false;
+        $this->deleteCategoryVIImage($category_id);
 
         return DB::table('categories')
             ->where('categories.id', $category_id)
@@ -282,12 +276,9 @@ class CategoryRepository implements ICategoryRepository
         $status = $this->deleteCategory($category_id);
 
         if ($status == false) {
-            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, ERROR_TYPE_COMMON, null);
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, "Unknown category", null);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Category successfully deleted'
-        ], 200);
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Category successfully deleted', null, null, false);
     }
 }
