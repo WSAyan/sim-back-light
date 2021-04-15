@@ -44,11 +44,7 @@ class CategoryRepository implements ICategoryRepository
             ->paginate($size)
             ->toArray();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Category list generated',
-            'categories' => $this->formatCategories($categories)
-        ]);
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Category list generated', $this->formatCategories($categories), 'categories', true);
     }
 
     public function getCategoryListWithDetails()
@@ -89,11 +85,7 @@ class CategoryRepository implements ICategoryRepository
             return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Category successfully created',
-            'category' => $category
-        ], 201);
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_CREATE, 'Category successfully created', $category, 'category', true);
     }
 
     /**
