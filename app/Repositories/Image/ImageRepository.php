@@ -59,12 +59,29 @@ class ImageRepository implements IImageRepository
             return null;
         }
 
+        return $this->formatImage($image);
+    }
+
+    private function formatImage($image)
+    {
         $result = [];
         $result['id'] = $image->id;
         $result['name'] = $image->image;
         $result['url'] = asset('images') . '/' . $image->image;
 
         return $result;
+    }
+
+    private function formatImages($images)
+    {
+        $data = $images['data'];
+        $i = 0;
+        foreach ($data as $item) {
+            $images['data'][$i] = $this->formatImage($item);
+            $i++;
+        }
+
+        return $images;
     }
 
     public function writeInStorage($postedImage)
@@ -112,6 +129,10 @@ class ImageRepository implements IImageRepository
 
     public function deleteImageById($imageId)
     {
+        $this->deleteCategoryImage($imageId);
+        $this->deleteBrandImage($imageId);
+        $this->deleteProductImage($imageId);
+
         $status = $this->deleteImageFromStorageById($imageId);
 
         if ($status == false) return false;
@@ -139,12 +160,7 @@ class ImageRepository implements IImageRepository
             return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
         }
 
-        $result = [];
-        $result['id'] = $image->id;
-        $result['name'] = $image->image;
-        $result['url'] = asset('images') . '/' . $image->image;
-
-        return ResponseFormatter::successResponse(SUCCESS_TYPE_CREATE, "Image updated", $result, "image", true);
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_CREATE, "Image updated", $this->formatImage($image), "image", true);
     }
 
     public function getImageList(Request $request)
@@ -159,18 +175,44 @@ class ImageRepository implements IImageRepository
             $query = "";
         }
 
-        $imageUrl = asset('images') . '/';
-
         $images = DB::table('images')
-            ->selectRaw(
-                "images.id as id,
-                images.image as name,
-                CONCAT('$imageUrl' , images.image) as image_url"
-            )
             ->where('images.image', 'LIKE', "%{$query}%")
             ->orderBy('images.id')
-            ->paginate($size);
+            ->paginate($size)
+            ->toArray();
 
-        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, "Image list generated", $images, "images", true);
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK,'Image list generated',  $this->formatImages($images), "images", true);
+    }
+
+    public function getAllImagesById($id)
+    {
+        return DB::table('images')
+            ->where('images.id', '=', $id)
+            ->orderBy('images.id')
+            ->get()
+            ->map(function ($item) {
+                return $this->formatImage($item);
+            });
+    }
+
+    public function deleteCategoryImage($imageId)
+    {
+        return DB::table('categories_v_images')
+            ->where('categories_v_images.image_id', $imageId)
+            ->delete();
+    }
+
+    public function deleteProductImage($imageId)
+    {
+        return DB::table('products_v_images')
+            ->where('products_v_images.image_id', $imageId)
+            ->delete();
+    }
+
+    public function deleteBrandImage($imageId)
+    {
+        return DB::table('brands_v_images')
+            ->where('brands_v_images.image_id', $imageId)
+            ->delete();
     }
 }

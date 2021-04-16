@@ -59,7 +59,7 @@ Route::group([
 
     // brand
     Route::post('brands', 'BrandController@store');
-    Route::get('brands', 'BrandController@index');
+    Route::get('brands', 'BrandController@showBrandsList');
     Route::get('brands/{id}', 'BrandController@show');
     Route::put('brands/{id}', 'BrandController@update');
     Route::delete('brands/{id}', 'BrandController@destroy');
