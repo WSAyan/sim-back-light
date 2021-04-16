@@ -31,5 +31,13 @@ interface IBrandRepository
     public function updateBrandWithoutImage($id, $name);
 
     public function updateBrand(Request $request, $id);
+
+    public function updateBrandVImage($brand_id, $image_id);
+
+    public function deleteBrandVIImage($brand_id);
+
+    public function deleteBrand($brand_id);
+
+    public function destroyCategory($brand_id);
 }
 

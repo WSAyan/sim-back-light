@@ -5,8 +5,6 @@ namespace App\Repositories\Brand;
 
 use App\Brand;
 use App\BrandVImage;
-use App\Category;
-use App\CategoryVImage;
 use App\Repositories\Image\IImageRepository;
 use App\Utils\ResponseFormatter;
 use Illuminate\Http\Request;
@@ -233,5 +231,32 @@ class BrandRepository implements IBrandRepository
                     'image_id' => $image_id
                 ]
             );
+    }
+
+    public function deleteBrandVIImage($brand_id)
+    {
+        return DB::table('brands_v_images')
+            ->where('brands_v_images.brand_id', $brand_id)
+            ->delete();
+    }
+
+    public function deleteBrand($brand_id)
+    {
+        $this->deleteBrandVIImage($brand_id);
+
+        return DB::table('brands')
+            ->where('brands.id', $brand_id)
+            ->delete();
+    }
+
+    public function destroyCategory($brand_id)
+    {
+        $status = $this->deleteBrand($brand_id);
+
+        if ($status == false) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, "Unknown brand", null);
+        }
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Brand successfully deleted', null, null, false);
     }
 }

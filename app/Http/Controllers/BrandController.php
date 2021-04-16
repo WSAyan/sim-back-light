@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 
 
 use App\Repositories\Brand\IBrandRepository;
-use App\Repositories\Order\IOrderRepository;
 use Illuminate\Http\Request;
 
 class BrandController extends Controller
@@ -35,5 +34,9 @@ class BrandController extends Controller
     public function update(Request $request, $id)
     {
         return $this->brandRepo->updateBrand($request, $id);
+    }
+
+    public function destroy($id){
+        return $this->brandRepo->destroyCategory($id);
     }
 }
