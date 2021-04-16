@@ -72,6 +72,18 @@ class ImageRepository implements IImageRepository
         return $result;
     }
 
+    private function formatImages($images)
+    {
+        $data = $images['data'];
+        $i = 0;
+        foreach ($data as $item) {
+            $images['data'][$i] = $this->formatImage($item);
+            $i++;
+        }
+
+        return $images;
+    }
+
     public function writeInStorage($postedImage)
     {
         $imageName = uniqid('image-') . '-' . time() . '.' . $postedImage->getClientOriginalExtension();
@@ -163,34 +175,24 @@ class ImageRepository implements IImageRepository
             $query = "";
         }
 
-        $imageUrl = asset('images') . '/';
-
         $images = DB::table('images')
-            ->selectRaw(
-                "images.id as id,
-                images.image as name,
-                CONCAT('$imageUrl' , images.image) as image_url"
-            )
             ->where('images.image', 'LIKE', "%{$query}%")
             ->orderBy('images.id')
-            ->paginate($size);
+            ->paginate($size)
+            ->toArray();
 
-        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, "Image list generated", $images, "images", true);
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK,'Image list generated',  $this->formatImages($images), "images", true);
     }
 
     public function getAllImagesById($id)
     {
-        $imageUrl = asset('images') . '/';
-
         return DB::table('images')
-            ->selectRaw(
-                "images.id as id,
-                images.image as name,
-                CONCAT('$imageUrl' , images.image) as image_url"
-            )
             ->where('images.id', '=', $id)
             ->orderBy('images.id')
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                return $this->formatImage($item);
+            });
     }
 
     public function deleteCategoryImage($imageId)
