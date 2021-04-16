@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 interface IBrandRepository
 {
-    public function showAllBrands();
+    public function showAllBrands(Request $request);
 
     public function showBrandDetails($id);
 
@@ -19,5 +19,7 @@ interface IBrandRepository
     public function storeBrand(Request $request);
 
     public function saveBrand($brand_name);
+
+    public function getBrandImage($brand_id);
 }
 

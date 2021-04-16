@@ -17,9 +17,9 @@ class BrandController extends Controller
         $this->brandRepo = $brandRepo;
     }
 
-    public function index()
+    public function showBrandsList(Request $request)
     {
-        return $this->brandRepo->showAllBrands();
+        return $this->brandRepo->showAllBrands($request);
     }
 
     public function store(Request $request)

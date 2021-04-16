@@ -4,19 +4,40 @@
 namespace App\Repositories\Brand;
 
 use App\Brand;
+use App\Repositories\Image\IImageRepository;
+use App\Utils\ResponseFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class BrandRepository implements IBrandRepository
 {
-    public function showAllBrands()
+    private $imageRepo;
+
+    public function __construct(IImageRepository $imageRepo)
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Showing brands list',
-            'brands' => $this->getAllBrands()
-        ]);
+        $this->imageRepo = $imageRepo;
+    }
+
+    public function showAllBrands(Request $request)
+    {
+        $size = $request->get('size');
+        if (is_null($size) || empty($size)) {
+            $size = 5;
+        }
+
+        $query = $request->get('query');
+        if (is_null($query) || empty($query)) {
+            $query = "";
+        }
+
+        $brands = DB::table('brands')
+            ->where('brands.brand_name', 'LIKE', "%{$query}%")
+            ->orderBy('brands.id')
+            ->paginate($size)
+            ->toArray();
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Brands list generated', $this->formatBrands($brands), 'brands', true);
     }
 
     public function showBrandDetails($id)
@@ -32,6 +53,49 @@ class BrandRepository implements IBrandRepository
     {
         return DB::table('brands')
             ->get();
+    }
+
+    /**
+     * format single category item
+     * @param $brand
+     * @return array
+     */
+    private function formatBrand($brand)
+    {
+        $brandDetails = [];
+        $brandDetails['id'] = $brand->id;
+        $brandDetails['name'] = $brand->brand_name;
+        $brandDetails['images'] = $this->getBrandImage($brand->id);
+
+        return $brandDetails;
+    }
+
+    /**
+     * formats category list for response
+     * @param $brands
+     * @return mixed
+     */
+    private function formatBrands($brands)
+    {
+        $data = $brands['data'];
+        $i = 0;
+        foreach ($data as $item) {
+            $brands['data'][$i] = $this->formatBrand($item);
+            $i++;
+        }
+
+        return $brands;
+    }
+
+    public function getBrandImage($brand_id)
+    {
+        $brandVImage = DB::table('brands_v_images')
+            ->where('brands_v_images.brand_id', $brand_id)
+            ->first();
+
+        if (is_null($brandVImage)) return [];
+
+        return $this->imageRepo->getAllImagesById($brandVImage->image_id);
     }
 
     public function getBrandDetailsById($id)
