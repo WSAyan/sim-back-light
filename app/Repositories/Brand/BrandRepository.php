@@ -42,11 +42,13 @@ class BrandRepository implements IBrandRepository
 
     public function showBrandDetails($id)
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Showing brand details',
-            'brand' => $this->getBrandDetailsById($id)
-        ]);
+        $brand = $this->getBrandDetailsById($id);
+
+        if (is_null($brand)) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, 'Brand not found', null);
+        }
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Showing brand details', $this->formatBrand($brand), 'brand', true);
     }
 
     public function getAllBrands()
@@ -56,7 +58,7 @@ class BrandRepository implements IBrandRepository
     }
 
     /**
-     * format single category item
+     * format brand category item
      * @param $brand
      * @return array
      */
@@ -71,7 +73,7 @@ class BrandRepository implements IBrandRepository
     }
 
     /**
-     * formats category list for response
+     * formats brand list for response
      * @param $brands
      * @return mixed
      */
