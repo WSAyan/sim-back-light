@@ -31,4 +31,9 @@ class BrandController extends Controller
     {
         return $this->brandRepo->showBrandDetails($id);
     }
+
+    public function update(Request $request, $id)
+    {
+        return $this->brandRepo->updateBrand($request, $id);
+    }
 }

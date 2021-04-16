@@ -157,6 +157,33 @@ class BrandRepository implements IBrandRepository
         return ResponseFormatter::successResponse(SUCCESS_TYPE_CREATE, 'Brand successfully created', $brand, 'brand', true);
     }
 
+    public function updateBrand(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, 'Validation failed', $validator->errors()->all());
+        }
+
+        $name = $request->get('name');
+        $imageId = $request->get('image_id');
+
+        $brand = null;
+        if (is_null($imageId) || empty($imageId)) {
+            $brand = $this->updateBrandWithoutImage($id, $name);
+        } else {
+            $brand = $this->updateBrandWithImage($id, $imageId, $name);
+        }
+
+        if (is_null($brand)) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
+        }
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Brand successfully updated', $brand, 'brand', true);
+    }
+
     public function saveBrand($brand_name)
     {
         $brand = new Brand([
@@ -166,5 +193,45 @@ class BrandRepository implements IBrandRepository
         $brand->save();
 
         return $brand;
+    }
+
+    public function updateBrandWithImage($id, $imageId, $name)
+    {
+        $this->updateBrandVImage($id, $imageId);
+
+        DB::table('brands')
+            ->where('brands.id', $id)
+            ->update(
+                [
+                    'brand_name' => $name
+                ]
+            );
+
+        return $this->getBrandDetailsById($id);
+    }
+
+    public function updateBrandWithoutImage($id, $name)
+    {
+        DB::table('brands')
+            ->where('brands.id', $id)
+            ->update(
+                [
+                    'brand_name' => $name
+                ]
+            );
+
+        return $this->getBrandDetailsById($id);
+    }
+
+    public function updateBrandVImage($brand_id, $image_id)
+    {
+        return DB::table('brands_v_images')
+            ->where('brands_v_images.brand_id', $brand_id)
+            ->update(
+                [
+                    'brand_id' => $brand_id,
+                    'image_id' => $image_id
+                ]
+            );
     }
 }

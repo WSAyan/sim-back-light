@@ -25,5 +25,11 @@ interface IBrandRepository
     public function saveBrandVIImage($brand_id, $image_id);
 
     public function saveBrandWithImage($name, $imageId);
+
+    public function updateBrandWithImage($id, $imageId, $name);
+
+    public function updateBrandWithoutImage($id, $name);
+
+    public function updateBrand(Request $request, $id);
 }
 
