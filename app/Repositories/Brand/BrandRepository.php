@@ -4,6 +4,9 @@
 namespace App\Repositories\Brand;
 
 use App\Brand;
+use App\BrandVImage;
+use App\Category;
+use App\CategoryVImage;
 use App\Repositories\Image\IImageRepository;
 use App\Utils\ResponseFormatter;
 use Illuminate\Http\Request;
@@ -48,7 +51,27 @@ class BrandRepository implements IBrandRepository
             return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, 'Brand not found', null);
         }
 
-        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Showing brand details', $this->formatBrand($brand), 'brand', true);
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Showing brand details', $brand, 'brand', true);
+    }
+
+    public function saveBrandWithImage($name, $imageId)
+    {
+        $brand = $this->saveBrand($name);
+
+        $this->saveBrandVIImage($brand->id, $imageId);
+
+        return $this->getBrandDetailsById($brand->id);
+    }
+
+    public function saveBrandVIImage($brand_id, $image_id)
+    {
+        $brandVImage = new BrandVImage([
+            'brand_id' => $brand_id,
+            'image_id' => $image_id,
+        ]);
+        $brandVImage->save();
+
+        return $brandVImage;
     }
 
     public function getAllBrands()
@@ -102,36 +125,36 @@ class BrandRepository implements IBrandRepository
 
     public function getBrandDetailsById($id)
     {
-        return DB::table('brands')
+        $brand = DB::table('brands')
             ->where('brands.id', $id)
             ->first();
+
+        if (is_null($brand)) return null;
+
+        return $this->formatBrand($brand);
     }
 
     public function storeBrand(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required',
             'brand_name' => 'required|string|min:3',
+            'image_id' => 'required'
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
-        }
-
-        $user = auth()->user();
-        if ($request->get('user_id') != $user->id) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, 'Validation failed', $validator->errors()->all());
         }
 
         $brand_name = $request->get('brand_name');
+        $imageId = $request->get('image_id');
 
-        $brand = $this->saveBrand($brand_name);
+        $brand = $this->saveBrandWithImage($brand_name, $imageId);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Brand successfully created',
-            'brand' => $brand
-        ], 201);
+        if (is_null($brand)) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
+        }
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_CREATE, 'Brand successfully created', $brand, 'brand', true);
     }
 
     public function saveBrand($brand_name)

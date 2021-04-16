@@ -21,5 +21,9 @@ interface IBrandRepository
     public function saveBrand($brand_name);
 
     public function getBrandImage($brand_id);
+
+    public function saveBrandVIImage($brand_id, $image_id);
+
+    public function saveBrandWithImage($name, $imageId);
 }
 
