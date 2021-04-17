@@ -39,5 +39,7 @@ interface IBrandRepository
     public function deleteBrand($brand_id);
 
     public function destroyCategory($brand_id);
+
+    public function getBrand($id);
 }
 

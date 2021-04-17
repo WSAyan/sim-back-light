@@ -112,24 +112,27 @@ class BrandRepository implements IBrandRepository
 
     public function getBrandImage($brand_id)
     {
-        $brandVImage = DB::table('brands_v_images')
+        $imageMap = DB::table('brands_v_images')
             ->where('brands_v_images.brand_id', $brand_id)
-            ->first();
+            ->get();
 
-        if (is_null($brandVImage)) return [];
-
-        return $this->imageRepo->getAllImagesById($brandVImage->image_id);
+        return $this->imageRepo->getRelationalImages($imageMap);
     }
 
     public function getBrandDetailsById($id)
     {
-        $brand = DB::table('brands')
-            ->where('brands.id', $id)
-            ->first();
+        $brand = $this->getBrand($id);
 
         if (is_null($brand)) return null;
 
         return $this->formatBrand($brand);
+    }
+
+    public function getBrand($id)
+    {
+        return DB::table('brands')
+            ->where('brands.id', $id)
+            ->first();
     }
 
     public function storeBrand(Request $request)
@@ -140,7 +143,7 @@ class BrandRepository implements IBrandRepository
         ]);
 
         if ($validator->fails()) {
-            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, 'Validation failed', $validator->errors()->all());
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, $validator->errors()->all());
         }
 
         $brand_name = $request->get('brand_name');

@@ -36,5 +36,7 @@ interface IImageRepository
 
     public function deleteBrandImage($imageId);
 
-    public function getAllImagesById($id);
+    public function getImageInfoById($id);
+
+    public function getRelationalImages($imageMap);
 }
