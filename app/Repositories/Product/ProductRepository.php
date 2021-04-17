@@ -11,6 +11,7 @@ use App\Repositories\Brand\IBrandRepository;
 use App\Repositories\Category\ICategoryRepository;
 use App\Repositories\Image\IImageRepository;
 use App\Stock;
+use App\Utils\ResponseFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -26,16 +27,22 @@ class ProductRepository implements IProductRepository
         $this->imageRepo = $imageRepo;
     }
 
-    public function getProductList()
+    public function showProductList(Request $request)
     {
-        $imageUrl = asset('images') . '/';
+        $size = $request->get('size');
+        if (is_null($size) || empty($size)) {
+            $size = 5;
+        }
+
+        $query = $request->get('query');
+        if (is_null($query) || empty($query)) {
+            $query = "";
+        }
 
         $products = DB::table('products')
             ->join('categories', 'categories.id', '=', 'products.category_id')
             ->join('brands', 'brands.id', '=', 'products.brand_id')
             ->join('units', 'units.id', '=', 'products.unit_id')
-            ->leftJoin('products_v_images', 'products_v_images.product_id', '=', 'products.id')
-            ->leftJoin('images', 'products_v_images.image_id', '=', 'images.id')
             ->selectRaw(
                 "
                             products.id as product_id,
@@ -43,28 +50,81 @@ class ProductRepository implements IProductRepository
                             products.description as product_description,
                             products.price as product_unit_price,
                             products.stock_quantity as product_stock_quantity,
+                            categories.id as category_id,
                             categories.name as category_name,
-                            brands.brand_name as brand,
-                            units.unit_name as unit,
-                            units.is_reminder_allowed as unit_reminder_allowed,
-                            CONCAT('$imageUrl' , images.image) as image_url
+                            brands.id as brand_id,
+                            brands.brand_name as brand_name,
+                            units.id as unit_id,
+                            units.unit_name as unit_name,
+                            units.is_reminder_allowed as unit_reminder_allowed
                 "
             )
+            ->where('products.name', 'LIKE', "%{$query}%")
             ->groupBy('products.id')
             ->orderBy('products.id', 'desc')
-            ->paginate(25);
+            ->paginate($size)
+            ->toArray();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product list generated',
-            'products' => $products
-        ]);
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Products list generated', $this->formatProducts($products), 'products', true);
+    }
+
+    public function getProductImage($product_id)
+    {
+        $imageMap = DB::table('products_v_images')
+            ->where('products_v_images.product_id', $product_id)
+            ->get();
+
+        return $this->imageRepo->getRelationalImages($imageMap);
+    }
+
+    /**
+     * format product item
+     * @param $product
+     * @return array
+     */
+    private function formatProduct($product)
+    {
+        $productDetails = [];
+        $productDetails['id'] = $product->product_id;
+        $productDetails['name'] = $product->product_name;
+        $productDetails['description'] = $product->product_description;
+        $productDetails['price'] = $product->product_unit_price;
+        $productDetails['stock_quantity'] = $product->product_stock_quantity;
+        $productDetails['category']['id'] = $product->category_id;
+        $productDetails['category']['name'] = $product->category_name;
+        $productDetails['category']['images'] = $this->categoryRepo->getCategoryImage($product->category_id);
+        $productDetails['brand']['id'] = $product->brand_id;
+        $productDetails['brand']['name'] = $product->brand_name;
+        $productDetails['brand']['images'] = $this->categoryRepo->getCategoryImage($product->brand_id);
+        $productDetails['unit']['id'] = $product->unit_id;
+        $productDetails['unit']['name'] = $product->unit_name;
+        $productDetails['unit']['is_reminder_allowed'] = $product->unit_reminder_allowed;
+        $productDetails['images'] = $this->getProductImage($product->product_id);
+        $result['product_options'] = $this->getProductOptionsWithDetails($product->product_id);
+
+        return $productDetails;
+    }
+
+    /**
+     * formats product list for response
+     * @param $products
+     * @return mixed
+     */
+    private function formatProducts($products)
+    {
+        $data = $products['data'];
+        $i = 0;
+        foreach ($data as $item) {
+            $products['data'][$i] = $this->formatProduct($item);
+            $i++;
+        }
+
+        return $products;
     }
 
     public function storeProduct(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required',
             'category_id' => 'required',
             'brand_id' => 'required',
             'unit_id' => 'required',
@@ -76,17 +136,7 @@ class ProductRepository implements IProductRepository
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
-        }
-
-        $request->validate([
-            'images' => 'required',
-            'images.*' => 'required|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
-
-        $user = auth()->user();
-        if ($request->get('user_id') != $user->id) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, $validator->errors()->all());
         }
 
         $category_id = $request->get('category_id');
@@ -98,40 +148,27 @@ class ProductRepository implements IProductRepository
         $has_options = $request->get('has_options');
         $product_details = json_decode($request->get('product_details'), true);
         $stock_quantity = $request->get('stock_quantity');
+        $images = json_decode($request->get('images'), true);
+
+        if (sizeof($images) > 5) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["You can upload maximum 5 images"]);
+        }
 
         $product = $this->saveProduct($category_id, $brand_id, $unit_id, $price, $name, $description, $has_options, $stock_quantity);
 
-        $images = $request->file('images');
-        if ($images == null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Please upload photos',
-                'error' => 'Image upload failed!'
-            ], 500);
+        foreach ($images as $item) {
+            $this->saveProductVImage($product->id, $item);
         }
 
-        if (sizeof($images) > 5) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You can upload maximum 5 photos',
-                'error' => 'Image upload failed!'
-            ], 500);
-        }
-        $imageSaveStatus = $this->saveProductImages($images, $product->id);
-        if ($imageSaveStatus == false) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong!',
-                'error' => 'Image upload failed!'
-            ], 500);
-        }
-
-        $brand_name = $this->brandRepo->getBrandDetailsById($brand_id)->brand_name;
-        $category_name = $this->categoryRepo->getCategoryDetailsById($category_id)->name;
+        $brand_name = $this->brandRepo->getBrand($brand_id)->brand_name;
+        $category_name = $this->categoryRepo->getCategory($category_id)->name;
 
         if ($has_options == false) {
             // saving only one sku
             $stock = $this->saveStock($product->id, $this->generateSku($name, $brand_name, $category_name), $stock_quantity);
+            if (is_null($stock)) {
+                return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
+            }
         } else {
             // saving multiple sku depending on options
             foreach ($product_details as $item) {
@@ -140,15 +177,18 @@ class ProductRepository implements IProductRepository
                 $quantity = $item['quantity'];
 
                 $stock = $this->saveStock($product->id, $this->generateSku($name, $brand_name, $category_name), $quantity);
+                if (is_null($stock)) {
+                    return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
+                }
 
                 $productVOption = $this->saveProductVOption($product->id, $product_options_id, $product_options_details_id, $stock->id);
+                if (is_null($productVOption)) {
+                    return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
+                }
             }
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product successfully created'
-        ], 201);
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_CREATE, 'Product successfully created', $this->getProductDetailsById($product->id), 'product', true);
     }
 
     public function showProduct($id)
@@ -176,41 +216,29 @@ class ProductRepository implements IProductRepository
             ->join('categories', 'categories.id', '=', 'products.category_id')
             ->join('brands', 'brands.id', '=', 'products.brand_id')
             ->join('units', 'units.id', '=', 'products.unit_id')
-            ->select(
-                'products.id as product_id',
-                'products.name as product_name',
-                'products.description as product_description',
-                'products.price as product_unit_price',
-                'products.stock_quantity as product_stock_quantity',
-                'categories.id as category_id',
-                'categories.name as category_name',
-                'brands.id as brand_id',
-                'brands.brand_name as brand_name',
-                'units.id as unit_id',
-                'units.unit_name as unit_name',
-                'units.is_reminder_allowed as unit_reminder_allowed'
+            ->selectRaw(
+                "
+                            products.id as product_id,
+                            products.name as product_name,
+                            products.description as product_description,
+                            products.price as product_unit_price,
+                            products.stock_quantity as product_stock_quantity,
+                            categories.id as category_id,
+                            categories.name as category_name,
+                            brands.id as brand_id,
+                            brands.brand_name as brand_name,
+                            units.id as unit_id,
+                            units.unit_name as unit_name,
+                            units.is_reminder_allowed as unit_reminder_allowed
+                "
             )
             ->where('products.id', $id)
             ->first();
 
         // process query results
-        $result = [];
-        $result['id'] = $product->product_id;
-        $result['name'] = $product->product_name;
-        $result['description'] = $product->product_description;
-        $result['price'] = $product->product_unit_price;
-        $result['stock_quantity'] = $product->product_stock_quantity;
-        $result['category']['id'] = $product->category_id;
-        $result['category']['name'] = $product->category_name;
-        $result['brand']['id'] = $product->brand_id;
-        $result['brand']['brand_name'] = $product->brand_name;
-        $result['unit']['id'] = $product->unit_id;
-        $result['unit']['unit_name'] = $product->unit_name;
-        $result['unit']['is_reminder_allowed'] = $product->unit_reminder_allowed;
-        $result['product_options'] = $this->getProductOptionsWithDetails($id);
-        $result['product_images'] = $this->getProductImages($id);
+        if (is_null($product)) return null;
 
-        return $result;
+        return $this->formatProduct($product);
     }
 
     /**
@@ -256,7 +284,7 @@ class ProductRepository implements IProductRepository
      */
     public function getProductOptionsWithProduct($id)
     {
-        $productsOptions = DB::table('products_v_options')
+        return DB::table('products_v_options')
             ->join('product_options', 'products_v_options.product_options_id', '=', 'product_options.id')
             ->select(
                 'product_options.id as product_options_id',
@@ -265,10 +293,15 @@ class ProductRepository implements IProductRepository
             ->where('products_v_options.product_id', $id)
             ->groupBy('product_options_id')
             ->get();
-
-        return $productsOptions;
     }
 
+    /**
+     * generates skus for stock
+     * @param $productName
+     * @param $brandName
+     * @param $categoryName
+     * @return string|void
+     */
     public function generateSku($productName, $brandName, $categoryName)
     {
         if ($productName == null) return;
@@ -293,9 +326,7 @@ class ProductRepository implements IProductRepository
 
         $stockId = strtoupper(dechex($stockId));
 
-        $sku = $stockId . substr($productName, 0, 2) . substr($brandName, 0, 2) . substr($categoryName, 0, 2);
-
-        return $sku;
+        return $stockId . substr($productName, 0, 2) . substr($brandName, 0, 2) . substr($categoryName, 0, 2);
     }
 
     public function updateProductStock($product_id, $stock_id, $quantity)
@@ -364,30 +395,5 @@ class ProductRepository implements IProductRepository
         $productVImage->save();
 
         return $productVImage;
-    }
-
-    public function saveProductImages($images, $product_id)
-    {
-        foreach ($images as $image) {
-            $saveImage = $this->imageRepo->storeImage($image);
-
-            $this->saveProductVImage($product_id, $saveImage->id);
-            if (is_null($image)) return false;
-        }
-
-        return true;
-    }
-
-    public function getProductImages($product_id)
-    {
-        $imageUrl = asset('images') . '/';
-
-        $images = DB::table('products_v_images')
-            ->join('images', 'products_v_images.image_id', '=', 'images.id')
-            ->selectRaw("images.id as image_id, images.image as image_name, CONCAT('$imageUrl' , images.image) as image_url")
-            ->where('product_id', $product_id)
-            ->get();
-
-        return $images;
     }
 }

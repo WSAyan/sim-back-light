@@ -181,18 +181,29 @@ class ImageRepository implements IImageRepository
             ->paginate($size)
             ->toArray();
 
-        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK,'Image list generated',  $this->formatImages($images), "images", true);
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Image list generated', $this->formatImages($images), "images", true);
     }
 
-    public function getAllImagesById($id)
+    public function getImageInfoById($id)
     {
-        return DB::table('images')
-            ->where('images.id', '=', $id)
-            ->orderBy('images.id')
-            ->get()
-            ->map(function ($item) {
-                return $this->formatImage($item);
-            });
+        $image = $this->getImage($id);
+
+        if (is_null($image)) return null;
+
+        return $this->formatImage($image);
+    }
+
+    public function getRelationalImages($imageMap)
+    {
+        if (is_null($imageMap)) return [];
+
+        $images = [];
+        $i = 0;
+        foreach ($imageMap as $item) {
+            $images[$i] = $this->getImageInfoById($item->image_id);
+            $i++;
+        }
+        return $images;
     }
 
     public function deleteCategoryImage($imageId)

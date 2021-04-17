@@ -14,9 +14,9 @@ class ProductController extends Controller
         $this->productRepo = $productRepo;
     }
 
-    public function index()
+    public function showProductList(Request $request)
     {
-        return $this->productRepo->getProductList();
+        return $this->productRepo->showProductList($request);
     }
 
     public function store(Request $request)

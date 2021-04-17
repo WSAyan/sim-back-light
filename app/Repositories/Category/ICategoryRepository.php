@@ -37,4 +37,6 @@ interface ICategoryRepository
     public function destroyCategory($category_id);
 
     public function saveCategoryWithImage($name, $description, $imageId);
+
+    public function getCategory($id);
 }

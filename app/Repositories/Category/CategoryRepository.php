@@ -121,11 +121,16 @@ class CategoryRepository implements ICategoryRepository
         return $categories;
     }
 
-    public function getCategoryById($id)
+    public function getCategory($id)
     {
-        $category = DB::table('categories')
+        return DB::table('categories')
             ->where('categories.id', '=', $id)
             ->first();
+    }
+
+    public function getCategoryById($id)
+    {
+        $category = $this->getCategory($id);
 
         return $this->formatCategory($category);
     }
@@ -233,13 +238,11 @@ class CategoryRepository implements ICategoryRepository
 
     public function getCategoryImage($category_id)
     {
-        $categoryVImage = DB::table('categories_v_images')
+        $imageMap = DB::table('categories_v_images')
             ->where('categories_v_images.category_id', $category_id)
-            ->first();
+            ->get();
 
-        if (is_null($categoryVImage)) return [];
-
-        return $this->imageRepo->getAllImagesById($categoryVImage->image_id);
+        return $this->imageRepo->getRelationalImages($imageMap);
     }
 
     public function updateCategoryVImage($category_id, $image_id)
