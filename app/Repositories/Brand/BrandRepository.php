@@ -252,7 +252,7 @@ class BrandRepository implements IBrandRepository
             ->delete();
     }
 
-    public function destroyCategory($brand_id)
+    public function destroyBrand($brand_id)
     {
         $status = $this->deleteBrand($brand_id);
 

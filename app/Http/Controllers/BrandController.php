@@ -37,6 +37,6 @@ class BrandController extends Controller
     }
 
     public function destroy($id){
-        return $this->brandRepo->destroyCategory($id);
+        return $this->brandRepo->destroyBrand($id);
     }
 }

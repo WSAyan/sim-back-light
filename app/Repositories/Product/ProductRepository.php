@@ -396,17 +396,4 @@ class ProductRepository implements IProductRepository
 
         return $productVImage;
     }
-
-    public function getProductImages($product_id)
-    {
-        $imageUrl = asset('images') . '/';
-
-        $images = DB::table('products_v_images')
-            ->join('images', 'products_v_images.image_id', '=', 'images.id')
-            ->selectRaw("images.id as image_id, images.image as image_name, CONCAT('$imageUrl' , images.image) as image_url")
-            ->where('product_id', $product_id)
-            ->get();
-
-        return $images;
-    }
 }
