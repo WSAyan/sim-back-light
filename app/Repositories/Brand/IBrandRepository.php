@@ -41,5 +41,7 @@ interface IBrandRepository
     public function destroyBrand($brand_id);
 
     public function getBrand($id);
+
+    public function saveBrandWithoutImage($name);
 }
 
