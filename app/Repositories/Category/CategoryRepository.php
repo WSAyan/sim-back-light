@@ -67,8 +67,7 @@ class CategoryRepository implements ICategoryRepository
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
-            'description' => 'required|string',
-            'image_id' => 'required'
+            'description' => 'required|string'
         ]);
 
         if ($validator->fails()) {
@@ -77,9 +76,21 @@ class CategoryRepository implements ICategoryRepository
 
         $name = $request->get('name');
         $description = $request->get('description');
-        $imageId = $request->get('image_id');
+        $images = $request->get('images');
 
-        $category = $this->saveCategoryWithImage($name, $description, $imageId);
+        $category = null;
+        if (is_null($images) || empty($images)) {
+            $category = $this->saveCategoryWithoutImage($name, $description);
+        } else {
+            $images = json_decode($images, true);
+
+            if (sizeof($images) > 1) {
+                return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["You can upload maximum 1 image"]);
+            }
+
+            $category = $this->saveCategoryWithImage($name, $description, $images);
+        }
+
 
         if (is_null($category)) {
             return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
@@ -146,7 +157,7 @@ class CategoryRepository implements ICategoryRepository
         return $category;
     }
 
-    public function saveCategoryWithImage($name, $description, $imageId)
+    public function saveCategoryWithImage($name, $description, $images)
     {
         $category = new Category([
             'name' => $name,
@@ -154,7 +165,20 @@ class CategoryRepository implements ICategoryRepository
         ]);
         $category->save();
 
-        $this->saveCategoryVIImage($category->id, $imageId);
+        foreach ($images as $item) {
+            $this->saveCategoryVIImage($category->id, $item['id']);
+        }
+
+        return $this->getCategoryById($category->id);
+    }
+
+    public function saveCategoryWithoutImage($name, $description)
+    {
+        $category = new Category([
+            'name' => $name,
+            'description' => $description,
+        ]);
+        $category->save();
 
         return $this->getCategoryById($category->id);
     }
@@ -183,13 +207,18 @@ class CategoryRepository implements ICategoryRepository
 
         $name = $request->get('name');
         $description = $request->get('description');
-        $imageId = $request->get('image_id');
+        $images = $request->get('images');
 
         $category = null;
-        if (is_null($imageId) || empty($imageId)) {
+        if (is_null($images) || empty($images)) {
             $category = $this->updateCategoryWithoutImage($id, $name, $description);
         } else {
-            $category = $this->updateCategoryWithImage($id, $imageId, $name, $description);
+            $images = json_decode($images, true);
+            if (sizeof($images) > 1) {
+                return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["You can upload maximum 1 image"]);
+            }
+
+            $category = $this->updateCategoryWithImage($id, $images, $name, $description);
         }
 
         if (is_null($category)) {
@@ -199,9 +228,11 @@ class CategoryRepository implements ICategoryRepository
         return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Category successfully updated', $category, 'category', true);
     }
 
-    public function updateCategoryWithImage($id, $imageId, $name, $description)
+    public function updateCategoryWithImage($id, $images, $name, $description)
     {
-        $this->updateCategoryVImage($id, $imageId);
+        foreach ($images as $item) {
+            $this->updateCategoryVImage($id, $item['id']);
+        }
 
         DB::table('categories')
             ->where('categories.id', $id)
