@@ -157,7 +157,7 @@ class ProductRepository implements IProductRepository
         $product = $this->saveProduct($category_id, $brand_id, $unit_id, $price, $name, $description, $has_options, $stock_quantity);
 
         foreach ($images as $item) {
-            $this->saveProductVImage($product->id, $item);
+            $this->saveProductVImage($product->id, $item['id']);
         }
 
         $brand_name = $this->brandRepo->getBrand($brand_id)->brand_name;
