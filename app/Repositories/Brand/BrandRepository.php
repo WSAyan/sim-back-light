@@ -52,11 +52,20 @@ class BrandRepository implements IBrandRepository
         return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Showing brand details', $brand, 'brand', true);
     }
 
-    public function saveBrandWithImage($name, $imageId)
+    public function saveBrandWithImage($name, $images)
     {
         $brand = $this->saveBrand($name);
 
-        $this->saveBrandVIImage($brand->id, $imageId);
+        foreach ($images as $item) {
+            $this->saveBrandVIImage($brand->id, $item['id']);
+        }
+
+        return $this->getBrandDetailsById($brand->id);
+    }
+
+    public function saveBrandWithoutImage($name)
+    {
+        $brand = $this->saveBrand($name);
 
         return $this->getBrandDetailsById($brand->id);
     }
@@ -138,18 +147,29 @@ class BrandRepository implements IBrandRepository
     public function storeBrand(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'brand_name' => 'required|string|min:3',
-            'image_id' => 'required'
+            'brand_name' => 'required|string|min:3'
         ]);
 
         if ($validator->fails()) {
             return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, $validator->errors()->all());
         }
 
-        $brand_name = $request->get('brand_name');
-        $imageId = $request->get('image_id');
 
-        $brand = $this->saveBrandWithImage($brand_name, $imageId);
+        $brand_name = $request->get('brand_name');
+        $images = $request->get('images');
+        $brand = null;
+
+        if (is_null($images) || empty($images)) {
+            $brand = $this->saveBrandWithoutImage($brand_name);
+        } else {
+            $images = json_decode($images, true);
+
+            if (sizeof($images) > 1) {
+                return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["You can upload maximum 1 image"]);
+            }
+
+            $brand = $this->saveBrandWithImage($brand_name, $images);
+        }
 
         if (is_null($brand)) {
             return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
@@ -169,13 +189,19 @@ class BrandRepository implements IBrandRepository
         }
 
         $name = $request->get('name');
-        $imageId = $request->get('image_id');
+        $images = $request->get('images');
 
         $brand = null;
-        if (is_null($imageId) || empty($imageId)) {
+        if (is_null($images) || empty($images)) {
             $brand = $this->updateBrandWithoutImage($id, $name);
         } else {
-            $brand = $this->updateBrandWithImage($id, $imageId, $name);
+            $images = json_decode($images, true);
+
+            if (sizeof($images) > 1) {
+                return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["You can upload maximum 1 image"]);
+            }
+
+            $brand = $this->updateBrandWithImage($id, $images, $name);
         }
 
         if (is_null($brand)) {
@@ -196,9 +222,11 @@ class BrandRepository implements IBrandRepository
         return $brand;
     }
 
-    public function updateBrandWithImage($id, $imageId, $name)
+    public function updateBrandWithImage($id, $images, $name)
     {
-        $this->updateBrandVImage($id, $imageId);
+        foreach ($images as $item) {
+            $this->updateBrandVImage($id, $item['id']);
+        }
 
         DB::table('brands')
             ->where('brands.id', $id)
@@ -223,6 +251,7 @@ class BrandRepository implements IBrandRepository
 
         return $this->getBrandDetailsById($id);
     }
+
 
     public function updateBrandVImage($brand_id, $image_id)
     {
