@@ -147,7 +147,7 @@ class BrandRepository implements IBrandRepository
     public function storeBrand(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'brand_name' => 'required|string|min:3'
+            'name' => 'required|string|min:3'
         ]);
 
         if ($validator->fails()) {
@@ -155,7 +155,7 @@ class BrandRepository implements IBrandRepository
         }
 
 
-        $brand_name = $request->get('brand_name');
+        $brand_name = $request->get('name');
         $images = $request->get('images');
         $brand = null;
 
