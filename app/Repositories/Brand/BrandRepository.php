@@ -6,6 +6,7 @@ namespace App\Repositories\Brand;
 use App\Brand;
 use App\BrandVImage;
 use App\Repositories\Image\IImageRepository;
+use App\Utils\RequestFormatter;
 use App\Utils\ResponseFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -156,14 +157,12 @@ class BrandRepository implements IBrandRepository
 
 
         $brand_name = $request->get('name');
-        $images = $request->get('images');
+        $images = RequestFormatter::resolveJsonConfusion($request->get('images'));
         $brand = null;
 
         if (is_null($images) || empty($images)) {
             $brand = $this->saveBrandWithoutImage($brand_name);
         } else {
-            $images = json_decode($images, true);
-
             if (sizeof($images) > 1) {
                 return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["You can upload maximum 1 image"]);
             }
@@ -189,14 +188,12 @@ class BrandRepository implements IBrandRepository
         }
 
         $name = $request->get('name');
-        $images = $request->get('images');
+        $images = RequestFormatter::resolveJsonConfusion($request->get('images'));
 
         $brand = null;
         if (is_null($images) || empty($images)) {
             $brand = $this->updateBrandWithoutImage($id, $name);
         } else {
-            $images = json_decode($images, true);
-
             if (sizeof($images) > 1) {
                 return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["You can upload maximum 1 image"]);
             }
