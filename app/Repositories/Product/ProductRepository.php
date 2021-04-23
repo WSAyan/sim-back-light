@@ -11,6 +11,7 @@ use App\Repositories\Brand\IBrandRepository;
 use App\Repositories\Category\ICategoryRepository;
 use App\Repositories\Image\IImageRepository;
 use App\Stock;
+use App\Utils\RequestFormatter;
 use App\Utils\ResponseFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -146,9 +147,9 @@ class ProductRepository implements IProductRepository
         $name = $request->get('name');
         $description = $request->get('description');
         $has_options = $request->get('has_options');
-        $product_details = json_decode($request->get('product_details'), true);
+        $product_details = RequestFormatter::resolveJsonConfusion($request->get('product_details'));
         $stock_quantity = $request->get('stock_quantity');
-        $images = json_decode($request->get('images'), true);
+        $images = RequestFormatter::resolveJsonConfusion($request->get('images'));
 
         if (sizeof($images) > 5) {
             return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["You can upload maximum 5 images"]);

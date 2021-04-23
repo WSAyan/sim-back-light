@@ -7,6 +7,7 @@ namespace App\Repositories\Category;
 use App\Category;
 use App\CategoryVImage;
 use App\Repositories\Image\IImageRepository;
+use App\Utils\RequestFormatter;
 use App\Utils\ResponseFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -76,14 +77,12 @@ class CategoryRepository implements ICategoryRepository
 
         $name = $request->get('name');
         $description = $request->get('description');
-        $images = $request->get('images');
+        $images = RequestFormatter::resolveJsonConfusion($request->get('images'));
 
         $category = null;
         if (is_null($images) || empty($images)) {
             $category = $this->saveCategoryWithoutImage($name, $description);
         } else {
-            $images = json_decode($images, true);
-
             if (sizeof($images) > 1) {
                 return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["You can upload maximum 1 image"]);
             }
@@ -207,13 +206,12 @@ class CategoryRepository implements ICategoryRepository
 
         $name = $request->get('name');
         $description = $request->get('description');
-        $images = $request->get('images');
+        $images = RequestFormatter::resolveJsonConfusion($request->get('images'));
 
         $category = null;
         if (is_null($images) || empty($images)) {
             $category = $this->updateCategoryWithoutImage($id, $name, $description);
         } else {
-            $images = json_decode($images, true);
             if (sizeof($images) > 1) {
                 return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["You can upload maximum 1 image"]);
             }
