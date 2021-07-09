@@ -10,6 +10,7 @@ use App\ProductVOption;
 use App\Repositories\Brand\IBrandRepository;
 use App\Repositories\Category\ICategoryRepository;
 use App\Repositories\Image\IImageRepository;
+use App\Repositories\ProductOption\IProductOptionRepository;
 use App\Stock;
 use App\Utils\RequestFormatter;
 use App\Utils\ResponseFormatter;
@@ -19,13 +20,14 @@ use Illuminate\Support\Facades\Validator;
 
 class ProductRepository implements IProductRepository
 {
-    private $brandRepo, $categoryRepo, $imageRepo;
+    private $brandRepo, $categoryRepo, $imageRepo, $productOptionRepo;
 
-    public function __construct(IBrandRepository $brandRepo, ICategoryRepository $categoryRepo, IImageRepository $imageRepo)
+    public function __construct(IBrandRepository $brandRepo, ICategoryRepository $categoryRepo, IImageRepository $imageRepo, IProductOptionRepository $productOptionRepo)
     {
         $this->brandRepo = $brandRepo;
         $this->categoryRepo = $categoryRepo;
         $this->imageRepo = $imageRepo;
+        $this->productOptionRepo = $productOptionRepo;
     }
 
     public function showProductList(Request $request)
@@ -101,7 +103,7 @@ class ProductRepository implements IProductRepository
         $productDetails['unit']['name'] = $product->unit_name;
         $productDetails['unit']['is_reminder_allowed'] = $product->unit_reminder_allowed;
         $productDetails['images'] = $this->getProductImage($product->product_id);
-        $result['product_options'] = $this->getProductOptionsWithDetails($product->product_id);
+        $productDetails['product_options'] = $this->productOptionRepo->getProductOptionsWithDetails($product->product_id);
 
         return $productDetails;
     }
@@ -240,60 +242,6 @@ class ProductRepository implements IProductRepository
         if (is_null($product)) return null;
 
         return $this->formatProduct($product);
-    }
-
-    /**
-     * @param $id : product id
-     * @return array
-     */
-    public function getProductOptionsWithDetails($id)
-    {
-        // get product options
-        $productsOptions = $this->getProductOptionsWithProduct($id);
-
-        $productOptionsAndDetails = [];
-        $i = 0;
-        foreach ($productsOptions as $item) {
-            $productOptionsAndDetails[$i]['product_options_id'] = $item->product_options_id;
-            $productOptionsAndDetails[$i]['product_options_name'] = $item->product_options_name;
-
-            // get product details
-            $details = DB::table('products_v_options')
-                ->join('product_options_details', 'products_v_options.product_options_details_id', '=', 'product_options_details.id')
-                ->join('stocks', 'products_v_options.stock_id', '=', 'stocks.id')
-                ->select(
-                    'product_options_details.id as id',
-                    'product_options_details.name as name',
-                    'stocks.id as stock_id',
-                    'stocks.quantity as quantity',
-                    'stocks.sku as sku'
-                )
-                ->where('products_v_options.product_id', $id)
-                ->where('products_v_options.product_options_id', $item->product_options_id)
-                ->get();
-
-            $productOptionsAndDetails[$i]['product_details'] = $details;
-            $i++;
-        }
-
-        return $productOptionsAndDetails;
-    }
-
-    /**
-     * @param $id : product id
-     * @return \Illuminate\Support\Collection
-     */
-    public function getProductOptionsWithProduct($id)
-    {
-        return DB::table('products_v_options')
-            ->join('product_options', 'products_v_options.product_options_id', '=', 'product_options.id')
-            ->select(
-                'product_options.id as product_options_id',
-                'product_options.name as product_options_name'
-            )
-            ->where('products_v_options.product_id', $id)
-            ->groupBy('product_options_id')
-            ->get();
     }
 
     /**
