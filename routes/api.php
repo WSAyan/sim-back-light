@@ -50,6 +50,13 @@ Route::group([
     Route::put('products/{id}', 'ProductController@update');
     Route::delete('products/{id}', 'ProductController@destroy');
 
+    // product options
+    Route::post('product_options', 'ProductOptionController@store');
+    Route::get('product_options', 'ProductOptionController@showProductOptionList');
+    Route::get('product_options/{id}', 'ProductOptionController@show');
+    Route::put('product_options/{id}', 'ProductOptionController@update');
+    Route::delete('product_options/{id}', 'ProductOptionController@destroy');
+
     // order
     Route::post('orders', 'OrderController@store');
     Route::get('orders', 'OrderController@index');
