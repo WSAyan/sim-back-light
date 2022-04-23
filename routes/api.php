@@ -23,6 +23,8 @@ Route::group([
     Route::post('logout', 'AuthController@logout');
     Route::post('refresh', 'AuthController@refresh');
     Route::get('user-profile', 'AuthController@userProfile');
+    Route::get('users', 'AuthController@showUsersList');
+    Route::get('roles', 'AuthController@showRolesList');
 });
 
 Route::group([

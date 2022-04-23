@@ -15,4 +15,10 @@ interface IUserRepository
     public function refresh();
 
     public function userProfile();
+
+    public function users(Request $request);
+
+    public function roles(Request $request);
+
+    public function getuser($id);
 }

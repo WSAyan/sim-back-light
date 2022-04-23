@@ -4,7 +4,9 @@
 namespace App\Utils;
 
 define("ERROR_TYPE_VALIDATION", 422);
+define("ERROR_TYPE_NOT_FOUND", 404);
 define("ERROR_TYPE_COMMON", 500);
+define("ERROR_TYPE_UNAUTHORIZED", 401);
 define("SUCCESS_TYPE_CREATE", 201);
 define("SUCCESS_TYPE_OK", 200);
 
@@ -13,37 +15,21 @@ define("VALIDATION_ERROR_MESSAGE", "Validation failed!");
 
 class ResponseFormatter
 {
-    public static function errorResponse($type, $message, $errors)
+    public static function errorResponse($type, $message, $errors = null)
     {
-        switch ($type) {
-            case ERROR_TYPE_VALIDATION:
-                return response()->json([
-                    'success' => false,
-                    'message' => $message,
-                    'errors' => $errors
-                ], ERROR_TYPE_VALIDATION);
-
-            case ERROR_TYPE_COMMON:
-                return response()->json([
-                    'success' => false,
-                    'message' => $message
-                ], ERROR_TYPE_COMMON);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => $message,
+            'errors' => $errors
+        ], $type);
     }
 
-    public static function successResponse($type, $message, $data, $dataName, $hasData)
+    public static function successResponse($type, $message, $data = null, $dataName = "data", $hasData = true)
     {
-        if ($hasData == true) {
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                $dataName => $data
-            ], $type);
-        }
-
         return response()->json([
             'success' => true,
-            'message' => $message
+            'message' => $message,
+            $dataName => $data
         ], $type);
     }
 }
