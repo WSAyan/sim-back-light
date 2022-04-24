@@ -9,6 +9,6 @@ class OTP extends Model
     protected $table = 'otp';
 
     protected $fillable = [
-        'to', 'otp', 'message_body', 'timeout', 'status'
+        'to_user_id', 'phone_number', 'otp', 'message_body', 'timeout', 'status'
     ];
 }
