@@ -12,6 +12,7 @@ use App\AccountDetail;
 use App\Utils\RequestFormatter;
 use App\Utils\ResponseFormatter;
 use App\Repositories\Image\IImageRepository;
+use App\UserDetail;
 
 class UserRepository implements IUserRepository
 {
@@ -29,6 +30,9 @@ class UserRepository implements IUserRepository
             'email' => 'required|string|min:4|max:100|unique:users',
             'password' => 'required|string|confirmed|min:6',
             'role_id' => 'required|numeric',
+            'full_name' => 'required|string|between:2,300',
+            'phone' => 'required|string|between:2,300',
+            'address' => 'required|string|between:2,300',
         ]);
 
         if ($validator->fails()) {
@@ -54,6 +58,9 @@ class UserRepository implements IUserRepository
 
         // set user role
         $roleVUser = $this->setUserRole($role->id, $user->id);
+
+        // set user role
+        $userDetails = $this->setUserDetails($user->id, null, $request->full_name, $request->phone, $request->address);
 
         return ResponseFormatter::successResponse(
             SUCCESS_TYPE_CREATE,
@@ -86,6 +93,24 @@ class UserRepository implements IUserRepository
         $roleVUser->save();
 
         return $roleVUser;
+    }
+
+
+    /**
+     * set user details
+     */
+    private function setUserDetails($user_id, $location_id, $full_name, $phone, $address)
+    {
+        $userDetails = new UserDetail();
+        $userDetails->user_id = $user_id;
+        $userDetails->location_id = $location_id;
+        $userDetails->full_name = $full_name;
+        $userDetails->phone = $phone;
+        $userDetails->address = $address;
+        $userDetails->track_id = uniqid('rt#');
+        $userDetails->save();
+
+        return $userDetails;
     }
 
     public function login(Request $request)
@@ -247,14 +272,21 @@ class UserRepository implements IUserRepository
 
     private function formatUser($user)
     {
-        $userDetails = [];
-        $userDetails['id'] = $user->id;
-        $userDetails['username'] = $user->username;
-        $userDetails['email'] = $user->email;
-        $userDetails['role'] = $this->getUserRole($user->id);
-        $userDetails['images'] = $this->getUserImage($user->id);
+        $user_details = $this->getUserDetails($user->id);
 
-        return $userDetails;
+        $result = [];
+        $result['id'] = $user->id;
+        $result['username'] = $user->username;
+        $result['email'] = $user->email;
+        $result['full_name'] = $user_details->full_name;
+        $result['phone'] = $user_details->phone;
+        $result['address'] = $user_details->address;
+        $result['track_id'] = $user_details->track_id;
+        $result['active_status'] = $user_details->active_status;
+        $result['role'] = $this->getUserRole($user->id);
+        $result['images'] = $this->getUserImage($user->id);
+
+        return $result;
     }
 
     public function getUserImage($user_id)
@@ -264,6 +296,20 @@ class UserRepository implements IUserRepository
             ->get();
 
         return $this->imageRepo->getRelationalImages($imageMap);
+    }
+
+    public function getUserDetails($user_id)
+    {
+        return DB::table('user_details')
+            ->select(
+                'user_details.phone as phone',
+                'user_details.full_name as full_name',
+                'user_details.address as address',
+                'user_details.track_id as track_id',
+                'user_details.active_status as active_status',
+            )
+            ->where('user_details.id', $user_id)
+            ->get();
     }
 
     public function getUserRole($userID)
