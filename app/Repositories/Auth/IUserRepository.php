@@ -21,4 +21,6 @@ interface IUserRepository
     public function roles(Request $request);
 
     public function getuser($id);
+
+    public function hasAdminPrivilage($user_id);
 }

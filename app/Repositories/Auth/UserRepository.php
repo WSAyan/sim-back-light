@@ -14,6 +14,8 @@ use App\Utils\ResponseFormatter;
 use App\Repositories\Image\IImageRepository;
 use App\UserDetail;
 
+define('ADMIN_ROLE_LEVEL', 2);
+
 class UserRepository implements IUserRepository
 {
     private $imageRepo;
@@ -171,8 +173,18 @@ class UserRepository implements IUserRepository
         );
     }
 
+    public function hasAdminPrivilage($user_id)
+    {
+        return $this->getUserRole($user_id)?->id <= ADMIN_ROLE_LEVEL;
+    }
+
     public function users(Request $request)
     {
+        if (!$this->hasAdminPrivilage(auth()->user()->id)) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_UNAUTHORIZED, "Permission denied!", ["This user has no permission"]);
+        }
+
+
         $size = $request->get('size');
         if (is_null($size) || empty($size)) {
             $size = 5;
@@ -200,6 +212,10 @@ class UserRepository implements IUserRepository
 
     public function roles(Request $request)
     {
+        if (!$this->hasAdminPrivilage(auth()->user()->id)) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_UNAUTHORIZED, "Permission denied!", ["This user has no permission"]);
+        }
+
         $size = $request->get('size');
         if (is_null($size) || empty($size)) {
             $size = 20;

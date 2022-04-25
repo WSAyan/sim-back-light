@@ -31,7 +31,9 @@ Route::group([
     'middleware' => ['jwt.verify'],
     'prefix' => 'v1/inventory'
 ], function ($router) {
-    // home
+    // common
+    Route::get('app-data', 'HomeController@appData');
+    Route::get('app-data', 'HomeController@appData');
     Route::get('app-data', 'HomeController@appData');
 
     // counter
@@ -79,5 +81,6 @@ Route::group([
     Route::get('images/{id}', 'ImageController@show');
     Route::put('images/{id}', 'ImageController@update');
     Route::delete('images/{id}', 'ImageController@destroy');
+
 });
 
