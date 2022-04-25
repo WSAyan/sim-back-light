@@ -82,5 +82,12 @@ Route::group([
     Route::put('images/{id}', 'ImageController@update');
     Route::delete('images/{id}', 'ImageController@destroy');
 
+    // collection
+    Route::post('collections', 'CollectionController@store');
+    Route::get('collections', 'CollectionController@showCollectionsList');
+    Route::get('collections/{id}', 'CollectionController@show');
+    Route::put('collections/{id}', 'CollectionController@update');
+    Route::delete('collections/{id}', 'CollectionController@destroy');
+
 });
 
