@@ -31,7 +31,7 @@ class UserRepository implements IUserRepository
             'password' => 'required|string|confirmed|min:6',
             'role_id' => 'required|numeric',
             'full_name' => 'required|string|between:2,300',
-            'phone' => 'required|string|between:2,300',
+            'phone' => 'string|between:2,300',
             'address' => 'required|string|between:2,300',
         ]);
 
@@ -59,8 +59,8 @@ class UserRepository implements IUserRepository
         // set user role
         $roleVUser = $this->setUserRole($role->id, $user->id);
 
-        // set user role
-        $userDetails = $this->setUserDetails($user->id, null, $request->full_name, $request->phone, $request->address);
+        // set user details, setting email as phone for now
+        $userDetails = $this->setUserDetails($user->id, null, $request->full_name, $request->email, $request->address);
 
         return ResponseFormatter::successResponse(
             SUCCESS_TYPE_CREATE,
@@ -272,17 +272,20 @@ class UserRepository implements IUserRepository
 
     private function formatUser($user)
     {
-        $user_details = $this->getUserDetails($user->id);
-
         $result = [];
         $result['id'] = $user->id;
         $result['username'] = $user->username;
         $result['email'] = $user->email;
-        $result['full_name'] = $user_details->full_name;
-        $result['phone'] = $user_details->phone;
-        $result['address'] = $user_details->address;
-        $result['track_id'] = $user_details->track_id;
-        $result['active_status'] = $user_details->active_status;
+
+
+        $user_details = $this->getUserDetails($user->id);
+        $result['full_name'] = $user_details?->full_name;
+        $result['phone'] = $user_details?->phone;
+        $result['address'] = $user_details?->address;
+        $result['track_id'] = $user_details?->track_id;
+        $result['active_status'] = $user_details?->active_status;
+
+
         $result['role'] = $this->getUserRole($user->id);
         $result['images'] = $this->getUserImage($user->id);
 
@@ -308,8 +311,8 @@ class UserRepository implements IUserRepository
                 'user_details.track_id as track_id',
                 'user_details.active_status as active_status',
             )
-            ->where('user_details.id', $user_id)
-            ->get();
+            ->where('user_details.user_id', $user_id)
+            ->first();
     }
 
     public function getUserRole($userID)
