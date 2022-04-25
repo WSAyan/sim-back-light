@@ -89,5 +89,24 @@ Route::group([
     Route::put('collections/{id}', 'CollectionController@update');
     Route::delete('collections/{id}', 'CollectionController@destroy');
 
-});
+    // retailer
+    Route::post('retailers', 'RetailerController@store');
+    Route::get('retailers', 'RetailerController@showItems');
+    Route::get('retailers/{id}', 'RetailerController@show');
+    Route::put('retailers/{id}', 'RetailerController@update');
+    Route::delete('retailers/{id}', 'RetailerController@destroy');
 
+    // collector
+    Route::post('collectors', 'CollectorController@store');
+    Route::get('collectors', 'CollectorController@showItems');
+    Route::get('collectors/{id}', 'CollectorController@show');
+    Route::put('collectors/{id}', 'CollectorController@update');
+    Route::delete('collectors/{id}', 'CollectorController@destroy');
+
+    // otp
+    Route::post('otps', 'OTPController@store');
+    Route::get('otps', 'OTPController@showItems');
+    Route::get('otps/{id}', 'OTPController@show');
+    Route::put('otps/{id}', 'OTPController@update');
+    Route::delete('otps/{id}', 'OTPController@destroy');
+});
