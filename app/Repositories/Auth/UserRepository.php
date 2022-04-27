@@ -184,7 +184,6 @@ class UserRepository implements IUserRepository
             return ResponseFormatter::errorResponse(ERROR_TYPE_UNAUTHORIZED, "Permission denied!", ["This user has no permission"]);
         }
 
-
         $size = $request->get('size');
         if (is_null($size) || empty($size)) {
             $size = 5;
@@ -195,18 +194,50 @@ class UserRepository implements IUserRepository
             $query = "";
         }
 
-        $users = DB::table('users')
+        $role_id = $request->get('role_id');
+        $users = null;
+        if (is_null($role_id) || empty($role_id)) {
+            $users = $this->getUsers($size, $query);
+        } else {
+            $users = $this->getUsersByRole($role_id, $size, $query);
+        }
+
+        if (is_null($users) || empty($users)) {
+            return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Users not found', null, 'users', true);
+        }
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Users list generated', $this->formatUsers($users), 'users', false);
+    }
+
+
+    private function getUsers($size, $query)
+    {
+        return DB::table('users')
             ->selectRaw(
                 "users.id as id,
-                users.username as username,
-                users.email as email"
+            users.username as username,
+            users.email as email"
             )
             ->where('users.username', 'LIKE', "%{$query}%")
             ->orderBy('users.id')
             ->paginate($size)
             ->toArray();
+    }
 
-        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Users list generated', $this->formatUsers($users), 'users', true);
+    private function getUsersByRole($role_id, $size, $query)
+    {
+        return DB::table('users')
+            ->join('roles_v_users', 'users.id', '=', 'roles_v_users.user_id')
+            ->selectRaw(
+                "users.id as id,
+            users.username as username,
+            users.email as email"
+            )
+            ->where('roles_v_users.role_id', $role_id)
+            ->where('users.username', 'LIKE', "%{$query}%")
+            ->orderBy('users.id')
+            ->paginate($size)
+            ->toArray();
     }
 
 
@@ -361,5 +392,65 @@ class UserRepository implements IUserRepository
         $data['user'] = $this->formatUser($user);
 
         return $data;
+    }
+
+    private function deleteUserVImage($id)
+    {
+        return DB::table('users_v_images')
+            ->where('users_v_images.user_id', $id)
+            ->delete();
+    }
+
+    private function deleteUserDetails($id)
+    {
+        $location_id = DB::table('user_details')
+            ->select('user_details.location_id')
+            ->where('user_details.user_id', $id)
+            ->first();
+
+        if (is_null($location_id) || empty($location_id)) {
+            $this->deleteUsersLocation($location_id);
+        }
+
+        return DB::table('user_details')
+            ->where('user_details.user_id', $id)
+            ->delete();
+    }
+
+    private function deleteRoleVUser($id)
+    {
+        return DB::table('roles_v_users')
+            ->where('roles_v_users.user_id', $id)
+            ->delete();
+    }
+
+    private function deleteUsersLocation($id)
+    {
+        return DB::table('locations')
+            ->where('locations.id', $id)
+            ->delete();
+    }
+
+    private function deleteUser($id)
+    {
+        $this->deleteUserDetails($id);
+        $this->deleteRoleVUser($id);
+        $this->deleteUsersLocation($id);
+        $this->deleteUserVImage($id);
+
+        return DB::table('users')
+            ->where('users.id', $id)
+            ->delete();
+    }
+
+    public function destroyUser($id)
+    {
+        $status = $this->deleteUser($id);
+
+        if ($status == false) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_NOT_FOUND, "User doesn't exist", []);
+        }
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'User successfully deleted', null, "user", false);
     }
 }

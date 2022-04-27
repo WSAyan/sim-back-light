@@ -23,4 +23,6 @@ interface IUserRepository
     public function getuser($id);
 
     public function hasAdminPrivilage($user_id);
+
+    public function destroyUser($id);
 }
