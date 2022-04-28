@@ -79,11 +79,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $role_customer = Role::create([
-            'rolename' => 'customer'
+            'rolename' => 'collector'
         ]);
 
         $role_visitor = Role::create([
-            'rolename' => 'visitor'
+            'rolename' => 'retailer'
         ]);
     }
 
@@ -101,8 +101,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $admin_user = User::create([
-            'username' => 'Mob Psycho',
-            'email' => 'mob@mob.sim',
+            'username' => 'Admin',
+            'email' => 'admin',
             'password' => Hash::make('123456'),
         ]);
 
@@ -145,8 +145,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $customer_user = User::create([
-            'username' => 'Two Chainz',
-            'email' => '2chainz@2chainz.sim',
+            'username' => 'Test Collector 1',
+            'email' => '01712012345',
             'password' => Hash::make('123456'),
         ]);
 
@@ -156,8 +156,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $visitor_user = User::create([
-            'username' => 'Ibne Batuta',
-            'email' => 'ibnebatuta@ibne.sim',
+            'username' => 'Test Retailer 1',
+            'email' => '01712420420',
             'password' => Hash::make('123456'),
         ]);
 

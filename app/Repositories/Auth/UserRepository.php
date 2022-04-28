@@ -13,6 +13,7 @@ use App\Utils\RequestFormatter;
 use App\Utils\ResponseFormatter;
 use App\Repositories\Image\IImageRepository;
 use App\UserDetail;
+use Exception;
 
 define('ADMIN_ROLE_LEVEL', 2);
 
@@ -452,5 +453,67 @@ class UserRepository implements IUserRepository
         }
 
         return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'User successfully deleted', null, "user", false);
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'username' => 'required|string',
+            'email' => 'required|string',
+            'full_name' => 'required|string',
+            'address' => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, 'Validation failed', $validator->errors()->all());
+        }
+
+        $user = $this->updateUsersValues(
+            $id,
+            $request->username,
+            $request->email,
+            $request->full_name,
+            $request->address,
+            $request->email
+        ); // setting email as phone for now
+        if (is_null($user) || empty($user)) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
+        }
+
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'User successfully updated', $user, 'user', true);
+    }
+
+    private function updateUsersValues($id, $usename, $email, $full_name, $address, $phone)
+    {
+        try {
+            $this->updateuserDetails($id, $full_name, $address, $phone);
+
+            DB::table('users')
+                ->where('users.id', $id)
+                ->update(
+                    [
+                        'username' => $usename,
+                        'email' => $email,
+                    ]
+                );
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        return $this->getuser($id);
+    }
+
+    private function updateuserDetails($user_id, $full_name, $address, $phone)
+    {
+        return DB::table('user_details')
+            ->where('user_details.user_id', $user_id)
+            ->update(
+                [
+                    'full_name' => $full_name,
+                    'address' => $address,
+                    'phone' => $phone,
+                ]
+            );
     }
 }
