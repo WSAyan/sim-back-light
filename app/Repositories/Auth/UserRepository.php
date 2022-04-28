@@ -280,7 +280,7 @@ class UserRepository implements IUserRepository
             ->where('users.id', '=', $id)
             ->first();
 
-        return $this->formatUser($user);
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'User details', $this->formatUser($user), 'user', true);
     }
 
     private function formatRoles($items)
