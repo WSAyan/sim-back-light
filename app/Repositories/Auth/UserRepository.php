@@ -196,13 +196,11 @@ class UserRepository implements IUserRepository
         }
 
         $role_id = $request->get('role_id');
-        $users = null;
         if (is_null($role_id) || empty($role_id)) {
-            $users = $this->getUsers($size, $query);
-        } else {
-            $users = $this->getUsersByRole($role_id, $size, $query);
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE);
         }
 
+        $users = $this->getUsersByRole($role_id, $size, $query);
         if (is_null($users) || empty($users)) {
             return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Users not found', null, 'users', true);
         }
