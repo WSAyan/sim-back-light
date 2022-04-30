@@ -283,6 +283,20 @@ class UserRepository implements IUserRepository
         return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'User details', $this->formatUser($user), 'user', true);
     }
 
+    public function getuserById($id)
+    {
+        $user = DB::table('users')
+            ->selectRaw(
+                "users.id as id,
+                users.username as username,
+                users.email as email"
+            )
+            ->where('users.id', '=', $id)
+            ->first();
+
+        return $this->formatUser($user);
+    }
+
     private function formatRoles($items)
     {
         $data = $items['data'];

@@ -27,4 +27,6 @@ interface IUserRepository
     public function destroyUser($id);
 
     public function updateUser(Request $request, $id);
+
+    public function getuserById($id);
 }
