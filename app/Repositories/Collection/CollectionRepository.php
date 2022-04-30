@@ -34,7 +34,15 @@ class CollectionRepository implements ICollectionRepository
 
         $collections = $this->getCollections($size, $query);
 
-        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Collections list generated', $this->formatCollections($collections), 'users', false);
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Collections list generated', $this->formatCollections($collections), 'collections', false);
+    }
+
+    private function getCollectionById($id)
+    {
+        return DB::table('collections')
+            ->select("*")
+            ->where('collections.id', '=', $id)
+            ->first();
     }
 
     private function getCollections($size, $query)
@@ -173,11 +181,87 @@ class CollectionRepository implements ICollectionRepository
 
     public function showCollection($id)
     {
+        $collection = $this->getCollectionById($id);
+        if (is_null($collection) || empty($collection)) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_NOT_FOUND, "collection doesn't exist", ["invalid collection id"]);
+        }
+
+        return ResponseFormatter::successResponse(
+            SUCCESS_TYPE_OK,
+            'Collection data',
+            $this->formatCollection($collection),
+            'collection',
+            false
+        );
     }
 
 
     public function updateCollection($request, $id)
     {
+        $validator = Validator::make($request->all(), [
+            'collector_user_id' => 'required|numeric',
+            'retailer_user_id' => 'required|numeric',
+            'comments' => 'required|string|min:2',
+            'amount' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, $validator->errors()->all());
+        }
+
+        $collectionValidator = $this->validateCollection(
+            $request->get('collector_user_id'),
+            $request->get('retailer_user_id'),
+            $request->get('comments'),
+            $request->get('amount')
+        );
+        if ($collectionValidator['isInvalid']) {
+            return ResponseFormatter::errorResponse(
+                ERROR_TYPE_VALIDATION,
+                VALIDATION_ERROR_MESSAGE,
+                $collectionValidator['errors'],
+            );
+        }
+
+        $collection = $this->updateCollectionValues(
+            $id,
+            $request->get('collector_user_id'),
+            $request->get('retailer_user_id'),
+            $request->get('comments'),
+            $request->get('amount')
+        );
+        if (is_null($collection) || empty($collection)) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
+        }
+
+
+        return ResponseFormatter::successResponse(
+            SUCCESS_TYPE_OK,
+            'Collection successfully updated',
+            $this->formatCollection($collection),
+            'collection',
+            true
+        );
+    }
+
+    private function updateCollectionValues($id, $collector_user_id, $retailer_user_id, $comments, $amount)
+    {
+        try {
+            DB::table('collections')
+                ->where('collections.id', $id)
+                ->update(
+                    [
+                        'collector_user_id' => $collector_user_id,
+                        'retailer_user_id' => $retailer_user_id,
+                        'comments' => $comments,
+                        'amount' => $amount,
+                    ]
+                );
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        return $this->getCollectionById($id);
     }
 
     public function destroyCollection($id)
