@@ -8,6 +8,7 @@ use App\Collection;
 use App\Repositories\Auth\IUserRepository;
 use Illuminate\Support\Facades\Storage;
 use App\Utils\ResponseFormatter;
+use Illuminate\Support\Facades\DB;
 
 class CollectionRepository implements ICollectionRepository
 {
@@ -20,7 +21,44 @@ class CollectionRepository implements ICollectionRepository
 
     public function getCollectionsList(Request $request)
     {
+        $size = $request->get('size');
+        if (is_null($size) || empty($size)) {
+            $size = 5;
+        }
+
+        $query = $request->get('query');
+        if (is_null($query) || empty($query)) {
+            $query = "";
+        }
+
+
+        $collections = $this->getCollections($size, $query);
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Collections list generated', $this->formatCollections($collections), 'users', false);
     }
+
+    private function getCollections($size, $query)
+    {
+        return DB::table('collections')
+            ->select("*")
+            ->where('collections.comments', 'LIKE', "%{$query}%")
+            ->orderBy('collections.id')
+            ->paginate($size)
+            ->toArray();
+    }
+
+    private function formatCollections($collections)
+    {
+        $data = $collections['data'];
+        $i = 0;
+        foreach ($data as $item) {
+            $collections['data'][$i] = $this->formatCollection($item);
+            $i++;
+        }
+
+        return $collections;
+    }
+
 
     public function createCollection(Request $request)
     {
