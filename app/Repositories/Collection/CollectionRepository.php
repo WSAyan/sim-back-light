@@ -266,5 +266,19 @@ class CollectionRepository implements ICollectionRepository
 
     public function destroyCollection($id)
     {
+        $status = $this->deleteCollection($id);
+
+        if ($status == false) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_NOT_FOUND, "Collection doesn't exist", []);
+        }
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Collection successfully deleted', null, "collection", false);
+    }
+
+    private function deleteCollection($id)
+    {
+        return DB::table('collections')
+            ->where('collections.id', $id)
+            ->delete();
     }
 }
