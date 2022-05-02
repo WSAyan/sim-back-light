@@ -94,20 +94,26 @@ class OTPRepository implements IOTPRepository
         }
 
         $toUser = $this->userRepo->getuserById($request->get('to_user_id'));
+        if (is_null($toUser['phone']) || empty($toUser['phone'])) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["Phone number not found"]);
+        }
+
+        $otpCallback = $this->sendOTP($toUser['phone']);
+        if (!$otpCallback['response']->ok() || $otpCallback['response']->status() != 200) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, ["otp sending failed!"]);
+        }
+
         $OTP = $this->saveOTP(
             $toUser['id'],
             $toUser['phone'],
-            "1234",
-            "message body",
+            $otpCallback['otp'],
+            $otpCallback['message_body'],
             OTP_TIMEOUT
         );
-
 
         if (is_null($OTP) || empty($OTP)) {
             return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE);
         }
-
-
 
         return ResponseFormatter::successResponse(
             SUCCESS_TYPE_CREATE,
@@ -149,17 +155,38 @@ class OTPRepository implements IOTPRepository
         return $OTP;
     }
 
-    private function sendOTP($contact)
+    private function sendOTP($phone_number)
     {
-        $response = Http::post($_ENV['SMS_BASE_URL'], [
-            'api_key' => $_ENV['SMS_API_KEY'],
-            'type' => $_ENV['SMS_TYPE_TEXT'],
-            'senderid' => $_ENV['SMS_SENDER_ID'],
-            'contacts' => $contact,
-            'msg' => $this->generateRandOTPMessage($this->generateRandOTP()),
+        $otp = $this->generateRandOTP();
+        $message_body = $this->generateRandOTPMessage($otp);
+
+        var_dump(env('SMS_API_KEY'));
+        var_dump(env('SMS_SENDER_ID'));
+
+        $response = Http::post(env('SMS_BASE_URL'), [
+            'api_key' => env('SMS_API_KEY'),
+            'type' => env('SMS_TYPE_TEXT'),
+            'senderid' => env('SMS_SENDER_ID'),
+            'contacts' => $phone_number,
+            'msg' => $message_body,
         ]);
 
-        return $response;
+        /* $response = Http::post("http://66.45.237.70/api.php", [
+            'username' => "01684976686",
+            'password' => "p6F5GXH7",
+            'number' => $phone_number,
+            'message' => $message_body,
+        ]); */
+
+        var_dump($response->status());
+        var_dump("----------");
+        var_dump($response->body());
+
+        return [
+            'response' => $response,
+            'otp' => $otp,
+            'message_body' => $message_body,
+        ];
     }
 
     private function generateRandOTP()

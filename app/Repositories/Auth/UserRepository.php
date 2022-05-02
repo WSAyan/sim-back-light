@@ -197,7 +197,7 @@ class UserRepository implements IUserRepository
 
         $role_id = $request->get('role_id');
         if (is_null($role_id) || empty($role_id)) {
-            return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE);
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["role id required"]);
         }
 
         $users = $this->getUsersByRole($role_id, $size, $query);
@@ -332,24 +332,20 @@ class UserRepository implements IUserRepository
 
     private function formatUser($user)
     {
-        $result = [];
-        $result['id'] = $user->id;
-        $result['username'] = $user->username;
-        $result['email'] = $user->email;
-
-
         $user_details = $this->getUserDetails($user->id);
-        $result['full_name'] = $user_details?->full_name;
-        $result['phone'] = $user_details?->phone;
-        $result['address'] = $user_details?->address;
-        $result['track_id'] = $user_details?->track_id;
-        $result['active_status'] = $user_details?->active_status;
 
-
-        $result['role'] = $this->getUserRole($user->id);
-        $result['images'] = $this->getUserImage($user->id);
-
-        return $result;
+        return [
+            'id' => $user->id,
+            'username' => $user->username,
+            'email' => $user->email,
+            'full_name' => $user_details?->full_name,
+            'phone' =>  $user_details?->phone,
+            'address' => $user_details?->address,
+            'track_id' => $user_details?->track_id,
+            'active_status' => $user_details?->active_status,
+            'role' => $this->getUserRole($user->id),
+            'images' => $this->getUserImage($user->id),
+        ];
     }
 
     public function getUserImage($user_id)
