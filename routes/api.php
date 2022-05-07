@@ -33,8 +33,6 @@ Route::group([
 ], function ($router) {
     // common
     Route::get('app-data', 'HomeController@appData');
-    Route::get('app-data', 'HomeController@appData');
-    Route::get('app-data', 'HomeController@appData');
 
     // counter
     Route::post('counter/create', 'CounterController@store');

@@ -160,20 +160,13 @@ class OTPRepository implements IOTPRepository
         $otp = $this->generateRandOTP();
         $message_body = $this->generateRandOTPMessage($otp);
 
-        var_dump(env('SMS_USER'));
-        var_dump(env('SMS_PASSWORD'));
-
-        $response = Http::post(env('SMS_BASE_URL'), [
+        $response = Http::asForm()->post(env('SMS_BASE_URL'), [
             'username' => env('SMS_USER'),
             'password' => env('SMS_PASSWORD'),
             'number' => $phone_number,
             'message' => $message_body,
         ]);
-
-        var_dump($response->status());
-        var_dump("----------");
-        var_dump($response->body());
-
+        
         return [
             'response' => $response,
             'otp' => $otp,
@@ -188,7 +181,7 @@ class OTPRepository implements IOTPRepository
 
     private function generateRandOTPMessage($otp)
     {
-        return "Your otp is " . $otp;
+        return "Your code is " . $otp;
     }
 
     private function validateOTP($to_user_id)
