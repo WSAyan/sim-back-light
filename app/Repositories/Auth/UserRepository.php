@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Auth;
 
+use App\Account;
 use App\Role;
 use App\RoleVUser;
 use App\User;
@@ -16,6 +17,7 @@ use App\UserDetail;
 use Exception;
 
 define('ADMIN_ROLE_LEVEL', 2);
+define('ACCOUNT_PREFIX', 'SIM');
 
 class UserRepository implements IUserRepository
 {
@@ -64,6 +66,9 @@ class UserRepository implements IUserRepository
 
         // set user details, setting email as phone for now
         $userDetails = $this->setUserDetails($user->id, null, $request->full_name, $request->email, $request->address);
+
+        // creates account
+        $account = $this->createAccount($user->id);
 
         return ResponseFormatter::successResponse(
             SUCCESS_TYPE_CREATE,
@@ -114,6 +119,27 @@ class UserRepository implements IUserRepository
         $userDetails->save();
 
         return $userDetails;
+    }
+
+    private function createAccount($user_id, $inital_balance = 0.0)
+    {
+        $account = new Account();
+        $account->user_id = $user_id;
+        $account->account_no = ACCOUNT_PREFIX . $this->getSixDigitID($user_id) . $this->getSixDigitID($this->currentAccountID());
+        $account->balance = $inital_balance;
+        $account->save();
+
+        return $account;
+    }
+
+    private function getSixDigitID($id)
+    {
+        return sprintf("%06d", $id);
+    }
+
+    private function currentAccountID()
+    {
+        return DB::table('accounts')->latest()->first()?->id ?: 1;
     }
 
     public function login(Request $request)
@@ -344,8 +370,21 @@ class UserRepository implements IUserRepository
             'track_id' => $user_details?->track_id,
             'active_status' => $user_details?->active_status,
             'role' => $this->getUserRole($user->id),
+            'account' => $this->getUserAccountByUserID($user->id),
             'images' => $this->getUserImage($user->id),
         ];
+    }
+
+    private function getUserAccountByUserID($user_id)
+    {
+        return DB::table('accounts')
+            ->select(
+                'accounts.id as id',
+                'accounts.account_no as account_no',
+                'accounts.balance as balance'
+            )
+            ->where('accounts.user_id', $user_id)
+            ->first();
     }
 
     public function getUserImage($user_id)
