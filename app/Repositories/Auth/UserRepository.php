@@ -70,7 +70,7 @@ class UserRepository extends BaseRepository implements IUserRepository
         $userDetails = $this->setUserDetails($user->id, null, $request->full_name, $request->email, $request->address);
 
         // creates account
-        $account = $this->accountRepo->createAccount($user->id, $request->balance ?: 0);
+        $account = $this->accountRepo->createAccount($user->id);
 
         // initial transaction
         $inital_transaction = $this->accountRepo->createTransaction(MAIN_ACCOUNT, $account->account_no, $request->balance ?: 0);

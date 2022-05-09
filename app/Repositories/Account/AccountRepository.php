@@ -9,12 +9,12 @@ use Illuminate\Support\Facades\DB;
 
 class AccountRepository extends BaseRepository implements IAccountRepository
 {
-    public function createAccount($user_id, $inital_balance = 0.0)
+    public function createAccount($user_id)
     {
         $account = new Account();
         $account->user_id = $user_id;
         $account->account_no = ACCOUNT_PREFIX . $this->getSixDigitID($user_id) . $this->getSixDigitID($this->currentAccountID());
-        $account->balance = $inital_balance;
+        $account->balance = 0.0;
         $account->save();
 
         return $account;

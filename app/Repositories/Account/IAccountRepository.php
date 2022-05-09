@@ -3,7 +3,7 @@ namespace App\Repositories\Account;
 
 interface IAccountRepository
 {
-    public function createAccount($user_id, $inital_balance = 0.0);
+    public function createAccount($user_id);
 
     public function currentAccountID();
 
