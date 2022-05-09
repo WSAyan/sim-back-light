@@ -39,7 +39,7 @@ class UserRepository extends BaseRepository implements IUserRepository
             'full_name' => 'required|string|between:2,300',
             'phone' => 'string|between:2,300',
             'address' => 'required|string|between:2,300',
-            'balance' => 'required|numeric'
+            'balance' => 'numeric'
         ]);
 
         if ($validator->fails()) {
