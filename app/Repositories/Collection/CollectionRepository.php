@@ -5,18 +5,21 @@ namespace App\Repositories\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Collection;
+use App\Repositories\Account\IAccountRepository;
 use App\Repositories\Auth\IUserRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\Storage;
 use App\Utils\ResponseFormatter;
 use Illuminate\Support\Facades\DB;
 
-class CollectionRepository implements ICollectionRepository
+class CollectionRepository extends BaseRepository implements ICollectionRepository
 {
-    private $userRepo;
+    private $userRepo, $accountRepo;
 
-    public function __construct(IUserRepository $userRepo)
+    public function __construct(IUserRepository $userRepo, IAccountRepository $accountRepo)
     {
         $this->userRepo = $userRepo;
+        $this->accountRepo = $accountRepo;
     }
 
     public function getCollectionsList(Request $request)
@@ -108,7 +111,11 @@ class CollectionRepository implements ICollectionRepository
             return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE);
         }
 
-        $transaction = $this->userRepo->createTransaction($this->userRepo->getUserAccountByUserID($request->get('retailer_user_id')), MAIN_ACCOUNT, $request->get('amount'));
+        $transaction = $this->accountRepo->createTransaction(
+            $this->accountRepo->getUserAccountByUserID($request->get('retailer_user_id'))->account_no,
+            MAIN_ACCOUNT,
+            $request->get('amount')
+        );
 
         return ResponseFormatter::successResponse(
             SUCCESS_TYPE_CREATE,

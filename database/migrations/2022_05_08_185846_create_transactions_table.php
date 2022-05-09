@@ -17,7 +17,7 @@ class CreateTransactionsTable extends Migration
             $table->id();
             $table->string('from_account_no');
             $table->string('to_account_no');
-            $table->unsignedDecimal('balance', 8, 2);
+            $table->unsignedDecimal('amount', 8, 2);
             $table->integer('status')->nullable();
             $table->timestamps();
         });

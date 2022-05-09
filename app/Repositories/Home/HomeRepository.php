@@ -3,12 +3,11 @@
 
 namespace App\Repositories\Home;
 
+use App\Repositories\BaseRepository;
 use App\Utils\ResponseFormatter;
 use Illuminate\Support\Facades\DB;
 
-define("MAIN_ACCOUNT", "SIM000000000000000");
-
-class HomeRepository implements IHomeRepository
+class HomeRepository extends BaseRepository implements IHomeRepository
 {
 
     public function getAppData()
@@ -33,7 +32,8 @@ class HomeRepository implements IHomeRepository
             ->get();
     }
 
-    private function formatData(){
+    private function formatData()
+    {
         return [
             "drawer_menu_items" => $this->getDrawerMenuItems(),
             "main_account" => MAIN_ACCOUNT

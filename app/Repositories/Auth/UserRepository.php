@@ -16,17 +16,17 @@ use App\Repositories\Image\IImageRepository;
 use App\Transaction;
 use App\UserDetail;
 use Exception;
+use App\Repositories\Account\IAccountRepository;
+use App\Repositories\BaseRepository;
 
-define('ADMIN_ROLE_LEVEL', 2);
-define('ACCOUNT_PREFIX', 'SIM');
-
-class UserRepository implements IUserRepository
+class UserRepository extends BaseRepository implements IUserRepository
 {
-    private $imageRepo;
+    private $imageRepo, $accountRepo;
 
-    public function __construct(IImageRepository $imageRepo)
+    public function __construct(IImageRepository $imageRepo, IAccountRepository $accountRepo)
     {
         $this->imageRepo = $imageRepo;
+        $this->accountRepo = $accountRepo;
     }
 
     public function register(Request $request)
@@ -70,10 +70,10 @@ class UserRepository implements IUserRepository
         $userDetails = $this->setUserDetails($user->id, null, $request->full_name, $request->email, $request->address);
 
         // creates account
-        $account = $this->createAccount($user->id, $request->balance ?: 0);
+        $account = $this->accountRepo->createAccount($user->id, $request->balance ?: 0);
 
         // initial transaction
-        $inital_transaction = $this->createTransaction(MAIN_ACCOUNT, $account->account_no, $request->balance ?: 0);
+        $inital_transaction = $this->accountRepo->createTransaction(MAIN_ACCOUNT, $account->account_no, $request->balance ?: 0);
 
         return ResponseFormatter::successResponse(
             SUCCESS_TYPE_CREATE,
@@ -126,65 +126,6 @@ class UserRepository implements IUserRepository
         return $userDetails;
     }
 
-    private function createAccount($user_id, $inital_balance = 0.0)
-    {
-        $account = new Account();
-        $account->user_id = $user_id;
-        $account->account_no = ACCOUNT_PREFIX . $this->getSixDigitID($user_id) . $this->getSixDigitID($this->currentAccountID());
-        $account->balance = $inital_balance;
-        $account->save();
-
-        return $account;
-    }
-
-    public function createTransaction($from_account_no, $to_account_no, $amount)
-    {
-        if ($amount <= 0) return;
-
-        $transaction = new Transaction([
-            'from_account_no' => $from_account_no,
-            'to_account_no' => $to_account_no,
-            'amount' => $amount
-        ]);
-
-        $transaction->save();
-
-        $this->updateAccountBalance($from_account_no, -$amount);
-        $this->updateAccountBalance($to_account_no, $amount);
-
-        return $transaction;
-    }
-
-    private function updateAccountBalance($account_no, $amount)
-    {
-        $balance = $this->getAccountBalance($account_no);
-
-        return DB::table('accounts')
-            ->where('accounts.account_no', $account_no)
-            ->update(
-                [
-                    'balance' => $amount + $balance,
-                ]
-            );
-    }
-
-    private function getSixDigitID($id)
-    {
-        return sprintf("%06d", $id);
-    }
-
-    private function currentAccountID()
-    {
-        return DB::table('accounts')->latest()->first()?->id ?: 1;
-    }
-
-    private function getAccountBalance($account_no)
-    {
-        return DB::table('accounts')
-            ->select('accounts.balance as balance')
-            ->where('accounts.account_no', $account_no)
-            ->first();;
-    }
 
     public function login(Request $request)
     {
@@ -414,21 +355,9 @@ class UserRepository implements IUserRepository
             'track_id' => $user_details?->track_id,
             'active_status' => $user_details?->active_status,
             'role' => $this->getUserRole($user->id),
-            'account' => $this->getUserAccountByUserID($user->id),
+            'account' => $this->accountRepo->getUserAccountByUserID($user->id),
             'images' => $this->getUserImage($user->id),
         ];
-    }
-
-    public function getUserAccountByUserID($user_id)
-    {
-        return DB::table('accounts')
-            ->select(
-                'accounts.id as id',
-                'accounts.account_no as account_no',
-                'accounts.balance as balance'
-            )
-            ->where('accounts.user_id', $user_id)
-            ->first();
     }
 
     public function getUserImage($user_id)

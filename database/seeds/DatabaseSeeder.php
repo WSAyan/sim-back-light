@@ -1,5 +1,6 @@
 <?php
 
+use App\Account;
 use App\Brand;
 use App\Category;
 use App\DeliveryMethod;
@@ -18,6 +19,8 @@ use App\Unit;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
+define("MAIN_ACCOUNT", "SIM000000000000000");
+
 class DatabaseSeeder extends Seeder
 {
     /**
@@ -30,6 +33,8 @@ class DatabaseSeeder extends Seeder
         $this->insertRoles();
 
         $this->insertUsers();
+
+        $this->insertAccount();
 
         $this->insertCategories();
 
@@ -177,6 +182,15 @@ class DatabaseSeeder extends Seeder
         $categories_example_2 = Category::create([
             'name' => 'Foods and Beverages',
             'description' => 'Foods and beverages related items'
+        ]);
+    }
+
+    private function insertAccount()
+    {
+        $main_acc = Account::create([
+            'user_id' => 1,
+            'account_no' => MAIN_ACCOUNT,
+            'balance' => 0.0,
         ]);
     }
 

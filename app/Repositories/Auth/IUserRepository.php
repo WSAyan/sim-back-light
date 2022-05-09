@@ -29,8 +29,4 @@ interface IUserRepository
     public function updateUser(Request $request, $id);
 
     public function getuserById($id);
-
-    public function getUserAccountByUserID($user_id);
-
-    public function createTransaction($from_account_no, $to_account_no, $amount);
 }
