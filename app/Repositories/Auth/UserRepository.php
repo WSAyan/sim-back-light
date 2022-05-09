@@ -13,6 +13,7 @@ use App\AccountDetail;
 use App\Utils\RequestFormatter;
 use App\Utils\ResponseFormatter;
 use App\Repositories\Image\IImageRepository;
+use App\Transaction;
 use App\UserDetail;
 use Exception;
 
@@ -38,6 +39,7 @@ class UserRepository implements IUserRepository
             'full_name' => 'required|string|between:2,300',
             'phone' => 'string|between:2,300',
             'address' => 'required|string|between:2,300',
+            'balance' => 'required|numeric'
         ]);
 
         if ($validator->fails()) {
@@ -68,7 +70,10 @@ class UserRepository implements IUserRepository
         $userDetails = $this->setUserDetails($user->id, null, $request->full_name, $request->email, $request->address);
 
         // creates account
-        $account = $this->createAccount($user->id);
+        $account = $this->createAccount($user->id, $request->balance ?: 0);
+
+        // initial transaction
+        $inital_transaction = $this->createTransaction(MAIN_ACCOUNT, $account->account_no, $request->balance ?: 0);
 
         return ResponseFormatter::successResponse(
             SUCCESS_TYPE_CREATE,
@@ -132,6 +137,37 @@ class UserRepository implements IUserRepository
         return $account;
     }
 
+    public function createTransaction($from_account_no, $to_account_no, $amount)
+    {
+        if ($amount <= 0) return;
+
+        $transaction = new Transaction([
+            'from_account_no' => $from_account_no,
+            'to_account_no' => $to_account_no,
+            'amount' => $amount
+        ]);
+
+        $transaction->save();
+
+        $this->updateAccountBalance($from_account_no, -$amount);
+        $this->updateAccountBalance($to_account_no, $amount);
+
+        return $transaction;
+    }
+
+    private function updateAccountBalance($account_no, $amount)
+    {
+        $balance = $this->getAccountBalance($account_no);
+
+        return DB::table('accounts')
+            ->where('accounts.account_no', $account_no)
+            ->update(
+                [
+                    'balance' => $amount + $balance,
+                ]
+            );
+    }
+
     private function getSixDigitID($id)
     {
         return sprintf("%06d", $id);
@@ -140,6 +176,14 @@ class UserRepository implements IUserRepository
     private function currentAccountID()
     {
         return DB::table('accounts')->latest()->first()?->id ?: 1;
+    }
+
+    private function getAccountBalance($account_no)
+    {
+        return DB::table('accounts')
+            ->select('accounts.balance as balance')
+            ->where('accounts.account_no', $account_no)
+            ->first();;
     }
 
     public function login(Request $request)
@@ -375,7 +419,7 @@ class UserRepository implements IUserRepository
         ];
     }
 
-    private function getUserAccountByUserID($user_id)
+    public function getUserAccountByUserID($user_id)
     {
         return DB::table('accounts')
             ->select(

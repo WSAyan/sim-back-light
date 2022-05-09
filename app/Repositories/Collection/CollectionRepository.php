@@ -108,6 +108,8 @@ class CollectionRepository implements ICollectionRepository
             return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE);
         }
 
+        $transaction = $this->userRepo->createTransaction($this->userRepo->getUserAccountByUserID($request->get('retailer_user_id')), MAIN_ACCOUNT, $request->get('amount'));
+
         return ResponseFormatter::successResponse(
             SUCCESS_TYPE_CREATE,
             'Collection created',
