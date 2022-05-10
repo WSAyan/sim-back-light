@@ -16,5 +16,7 @@ interface IOTPRepository
 
     public function updateOTP($request, $id);
 
+    public function verifyOTP($request, $id);
+
     public function destroyOTP($id);
 }

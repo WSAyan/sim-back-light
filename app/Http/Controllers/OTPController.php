@@ -30,6 +30,10 @@ class OTPController extends Controller
         return $this->otpRepo->showOTP($id);
     }
 
+    public function verify(Request $request, $id)
+    {
+        return $this->otpRepo->verifyOTP($request, $id);
+    }
 
     public function update(Request $request, $id)
     {

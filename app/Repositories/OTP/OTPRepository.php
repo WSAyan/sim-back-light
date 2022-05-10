@@ -126,13 +126,10 @@ class OTPRepository implements IOTPRepository
 
     private function formatOTP($OTP)
     {
-
         $result = [];
         $result['id'] = $OTP->id;
         $result['to_user'] = $this->userRepo->getuserById($OTP->to_user_id);
         $result['phone_number'] = $OTP->phone_number;
-        $result['otp'] = $OTP->otp;
-        $result['message_body'] = $OTP->message_body;
         $result['timeout'] = $OTP->timeout;
 
         return $result;
@@ -166,7 +163,7 @@ class OTPRepository implements IOTPRepository
             'number' => $phone_number,
             'message' => $message_body,
         ]);
-        
+
         return [
             'response' => $response,
             'otp' => $otp,
@@ -218,10 +215,52 @@ class OTPRepository implements IOTPRepository
     }
 
 
+    public function verifyOTP($request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'otp' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, $validator->errors()->all());
+        }
+
+        $otp = $request->get('otp');
+        $last_otp_data = $this->getOTPById($id);
+
+        if (!$this->isOtpVerificationSucced($otp, $last_otp_data)) {
+            return ResponseFormatter::errorResponse(
+                ERROR_TYPE_NOT_FOUND,
+                "OTP verification failed",
+                ["OTP not found or verification failed"]
+            );
+        }
+
+        $this->updateVerfiedOTP($last_otp_data->id);
+
+        return ResponseFormatter::successResponse(
+            SUCCESS_TYPE_OK,
+            'OTP verified'
+        );
+    }
+
+    private function isOtpVerificationSucced($otp, $last_otp_data)
+    {
+        return $last_otp_data?->is_verified != 1 && $otp == $last_otp_data?->otp;
+    }
+
+    private function updateVerfiedOTP($id)
+    {
+        return DB::table('otp')
+            ->where('otp.id', $id)
+            ->update([
+                'is_verified' => true,
+            ]);
+    }
+
     public function updateOTP($request, $id)
     {
     }
-
 
 
     public function destroyOTP($id)

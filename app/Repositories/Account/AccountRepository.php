@@ -66,7 +66,7 @@ class AccountRepository extends BaseRepository implements IAccountRepository
         return DB::table('accounts')
             ->select('accounts.balance as balance')
             ->where('accounts.account_no', $account_no)
-            ->first();;
+            ->first();
     }
 
     public function getUserAccountByUserID($user_id)

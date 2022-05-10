@@ -96,6 +96,7 @@ Route::group([
 
     // otp
     Route::post('otps', 'OTPController@store');
+    Route::post('otps/{id}', 'OTPController@verify');
     Route::get('otps', 'OTPController@showItems');
     Route::get('otps/{id}', 'OTPController@show');
     Route::put('otps/{id}', 'OTPController@update');

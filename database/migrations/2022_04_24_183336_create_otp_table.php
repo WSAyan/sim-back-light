@@ -20,6 +20,8 @@ class CreateOtpTable extends Migration
             $table->string('otp');
             $table->string('message_body');
             $table->bigInteger('timeout');
+            $table->boolean('is_verified');
+            $table->boolean('is_delivered');
             $table->timestamps();
         });
     }
