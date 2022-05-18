@@ -18,15 +18,17 @@ use App\UserDetail;
 use Exception;
 use App\Repositories\Account\IAccountRepository;
 use App\Repositories\BaseRepository;
+use App\Repositories\Contact\IContactRepository;
 
 class UserRepository extends BaseRepository implements IUserRepository
 {
-    private $imageRepo, $accountRepo;
+    private $imageRepo, $accountRepo, $contactRepo;
 
-    public function __construct(IImageRepository $imageRepo, IAccountRepository $accountRepo)
+    public function __construct(IImageRepository $imageRepo, IAccountRepository $accountRepo, IContactRepository $contactRepo)
     {
         $this->imageRepo = $imageRepo;
         $this->accountRepo = $accountRepo;
+        $this->contactRepo = $contactRepo;
     }
 
     public function register(Request $request)
@@ -74,6 +76,16 @@ class UserRepository extends BaseRepository implements IUserRepository
 
         // initial transaction
         $inital_transaction = $this->accountRepo->createTransaction(MAIN_ACCOUNT, $account->account_no, $request->balance ?: 0);
+
+        // initial contact
+        $contact = $this->contactRepo->createContactWithData(
+            $user->id,
+            $user->username,
+            $userDetails->phone,
+            null,
+            $userDetails->address,
+            null
+        );
 
         return ResponseFormatter::successResponse(
             SUCCESS_TYPE_CREATE,
@@ -356,6 +368,7 @@ class UserRepository extends BaseRepository implements IUserRepository
             'active_status' => $user_details?->active_status,
             'role' => $this->getUserRole($user->id),
             'account' => $this->accountRepo->getUserAccountByUserID($user->id),
+            'contacts' => $this->contactRepo->getContactsByUserId($user->id),
             'images' => $this->getUserImage($user->id),
         ];
     }

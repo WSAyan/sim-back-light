@@ -36,6 +36,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind('App\Repositories\OTP\IOTPRepository', 'App\Repositories\OTP\OTPRepository');
 
         $this->app->bind('App\Repositories\Account\IAccountRepository', 'App\Repositories\Account\AccountRepository');
+
+        $this->app->bind('App\Repositories\Contact\IContactRepository', 'App\Repositories\Contact\ContactRepository');
     }
 
     /**
