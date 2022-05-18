@@ -101,4 +101,11 @@ Route::group([
     Route::get('otps/{id}', 'OTPController@show');
     Route::put('otps/{id}', 'OTPController@update');
     Route::delete('otps/{id}', 'OTPController@destroy');
+
+    // contact
+    Route::post('contacts', 'ContactController@store');
+    Route::get('contacts', 'ContactController@showContacts');
+    Route::get('contacts/{id}', 'ContactController@show');
+    Route::put('contacts/{id}', 'ContactController@update');
+    Route::delete('contacts/{id}', 'ContactController@destroy');
 });

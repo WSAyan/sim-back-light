@@ -51,7 +51,7 @@ class ContactRepository extends BaseRepository implements IContactRepository
     {
     }
 
-    public function updateContact($id, Request $request)
+    public function updateContact(Request $request, $id)
     {
     }
 

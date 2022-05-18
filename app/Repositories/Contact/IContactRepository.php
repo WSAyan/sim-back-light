@@ -18,7 +18,7 @@ interface IContactRepository
 
     public function currentContactID();
 
-    public function updateContact($id, Request $request);
+    public function updateContact(Request $request, $id);
 
     public function deleteContact($id);
 }
