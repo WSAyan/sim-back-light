@@ -6,7 +6,6 @@ use App\Repositories\Auth\IUserRepository;
 use Illuminate\Http\Request;
 
 
-
 class AuthController extends Controller
 {
 
@@ -46,4 +45,13 @@ class AuthController extends Controller
         return $this->userRepo->userProfile();
     }
 
+    public function showUsersList(Request $request)
+    {
+        return $this->userRepo->users($request);
+    }
+
+    public function showRolesList(Request $request)
+    {
+        return $this->userRepo->roles($request);
+    }
 }

@@ -30,6 +30,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind('App\Repositories\Home\IHomeRepository', 'App\Repositories\Home\HomeRepository');
 
         $this->app->bind('App\Repositories\ProductOption\IProductOptionRepository', 'App\Repositories\ProductOption\ProductOptionRepository');
+
+        $this->app->bind('App\Repositories\Collection\ICollectionRepository', 'App\Repositories\Collection\CollectionRepository');
+
+        $this->app->bind('App\Repositories\OTP\IOTPRepository', 'App\Repositories\OTP\OTPRepository');
+
+        $this->app->bind('App\Repositories\Account\IAccountRepository', 'App\Repositories\Account\AccountRepository');
+
+        $this->app->bind('App\Repositories\Contact\IContactRepository', 'App\Repositories\Contact\ContactRepository');
     }
 
     /**

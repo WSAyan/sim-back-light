@@ -1,5 +1,6 @@
 <?php
 
+use App\Account;
 use App\Brand;
 use App\Category;
 use App\DeliveryMethod;
@@ -18,6 +19,8 @@ use App\Unit;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
+define("MAIN_ACCOUNT", "SIM000000000000000");
+
 class DatabaseSeeder extends Seeder
 {
     /**
@@ -30,6 +33,8 @@ class DatabaseSeeder extends Seeder
         $this->insertRoles();
 
         $this->insertUsers();
+
+        $this->insertAccount();
 
         $this->insertCategories();
 
@@ -79,11 +84,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $role_customer = Role::create([
-            'rolename' => 'customer'
+            'rolename' => 'collector'
         ]);
 
         $role_visitor = Role::create([
-            'rolename' => 'visitor'
+            'rolename' => 'retailer'
         ]);
     }
 
@@ -101,8 +106,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $admin_user = User::create([
-            'username' => 'Mob Psycho',
-            'email' => 'mob@mob.sim',
+            'username' => 'Admin',
+            'email' => 'admin',
             'password' => Hash::make('123456'),
         ]);
 
@@ -145,8 +150,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $customer_user = User::create([
-            'username' => 'Two Chainz',
-            'email' => '2chainz@2chainz.sim',
+            'username' => 'Test Collector 1',
+            'email' => '01712012345',
             'password' => Hash::make('123456'),
         ]);
 
@@ -156,8 +161,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $visitor_user = User::create([
-            'username' => 'Ibne Batuta',
-            'email' => 'ibnebatuta@ibne.sim',
+            'username' => 'Test Retailer 1',
+            'email' => '01712420420',
             'password' => Hash::make('123456'),
         ]);
 
@@ -177,6 +182,15 @@ class DatabaseSeeder extends Seeder
         $categories_example_2 = Category::create([
             'name' => 'Foods and Beverages',
             'description' => 'Foods and beverages related items'
+        ]);
+    }
+
+    private function insertAccount()
+    {
+        $main_acc = Account::create([
+            'user_id' => 1,
+            'account_no' => MAIN_ACCOUNT,
+            'balance' => 0.0,
         ]);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Utils\ResponseFormatter;
 use Closure;
 use JWTAuth;
 use Exception;
@@ -22,20 +23,11 @@ class JwtMiddleware
             $user = JWTAuth::parseToken()->authenticate();
         } catch (Exception $e) {
             if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenInvalidException) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Token is Invalid'
-                ], 401);
+                return ResponseFormatter::errorResponse(ERROR_TYPE_UNAUTHORIZED, 'Unauthorized', ['Token is Invalid']);
             } else if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenExpiredException) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Token is Expired'
-                ], 401);
+                return ResponseFormatter::errorResponse(ERROR_TYPE_UNAUTHORIZED, 'Unauthorized', ['Token is Expired']);
             } else {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Authorization Token not found'
-                ], 401);
+                return ResponseFormatter::errorResponse(ERROR_TYPE_UNAUTHORIZED, 'Unauthorized', ['Authorization Token not found']);
             }
         }
         return $next($request);
