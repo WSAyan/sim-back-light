@@ -153,14 +153,16 @@ class ProductRepository implements IProductRepository
         $stock_quantity = $request->get('stock_quantity');
         $images = RequestFormatter::resolveJsonConfusion($request->get('images'));
 
-        if (sizeof($images) > 5) {
+        if (!is_null($images) && sizeof($images) > 5) {
             return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["You can upload maximum 5 images"]);
         }
 
         $product = $this->saveProduct($category_id, $brand_id, $unit_id, $price, $name, $description, $has_options, $stock_quantity);
 
-        foreach ($images as $item) {
-            $this->saveProductVImage($product->id, $item['id']);
+        if (!is_null($images)){
+            foreach ($images as $item) {
+                $this->saveProductVImage($product->id, $item['id']);
+            }
         }
 
         $brand_name = $this->brandRepo->getBrand($brand_id)->brand_name;
