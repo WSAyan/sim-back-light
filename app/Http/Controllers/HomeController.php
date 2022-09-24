@@ -37,4 +37,9 @@ class HomeController extends Controller
     {
         return $this->userRepo->roles($request);
     }
+
+    public function getDropdowns()
+    {
+        return $this->homeRepo->getDropdowns();
+    }
 }

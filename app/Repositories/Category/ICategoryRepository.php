@@ -39,4 +39,6 @@ interface ICategoryRepository
     public function saveCategoryWithImage($name, $description, $imageId);
 
     public function getCategory($id);
+
+    public function getCategories();
 }
