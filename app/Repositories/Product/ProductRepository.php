@@ -241,7 +241,7 @@ class ProductRepository implements IProductRepository
 
         if ($has_options == false) {
             // saving only one sku
-            $stock = $this->updateProductStock($product->id, $this->getStockProductById($id)->id, $stock_quantity);
+            $stock = $this->updateStock($product->id, $this->getStockProductById($id)->id, $stock_quantity);
             if (is_null($stock)) {
                 return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
             }
@@ -355,6 +355,20 @@ class ProductRepository implements IProductRepository
         $updatedStock = DB::table('stocks')
             ->where('id', $stock_id)
             ->update(['quantity' => $updatedQuantity]);
+
+        return DB::table('stocks')->where('id', $stock_id)->first();
+    }
+
+    public function updateStock($product_id, $stock_id, $quantity){
+        $product = DB::table('products')->where('id', $product_id)->first();
+        $updatedProduct = DB::table('products')
+            ->where('id', $product_id)
+            ->update(['stock_quantity' => $quantity]);
+
+        $stock = DB::table('stocks')->where('id', $stock_id)->first();
+        $updatedStock = DB::table('stocks')
+            ->where('id', $stock_id)
+            ->update(['quantity' => $quantity]);
 
         return DB::table('stocks')->where('id', $stock_id)->first();
     }
