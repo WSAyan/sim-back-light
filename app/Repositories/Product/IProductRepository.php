@@ -31,4 +31,6 @@ interface IProductRepository
     public function saveProductVOption($product_id, $product_options_id, $product_options_details_id, $stock_id);
 
     public function saveProductVImage($product_id, $image_id);
+
+    public function getAllProducts();
 }

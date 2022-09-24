@@ -159,7 +159,7 @@ class ProductRepository implements IProductRepository
 
         $product = $this->saveProduct($category_id, $brand_id, $unit_id, $price, $name, $description, $has_options, $stock_quantity);
 
-        if (!is_null($images)){
+        if (!is_null($images)) {
             foreach ($images as $item) {
                 $this->saveProductVImage($product->id, $item['id']);
             }
@@ -230,7 +230,7 @@ class ProductRepository implements IProductRepository
 
         $product = $this->updateProductInfo($id, $category_id, $brand_id, $unit_id, $price, $name, $description, $has_options, $stock_quantity);
 
-        if (!is_null($images)){
+        if (!is_null($images)) {
             foreach ($images as $item) {
                 $this->updateProductVImage($product->id, $item['id']);
             }
@@ -359,7 +359,8 @@ class ProductRepository implements IProductRepository
         return DB::table('stocks')->where('id', $stock_id)->first();
     }
 
-    public function updateStock($product_id, $stock_id, $quantity){
+    public function updateStock($product_id, $stock_id, $quantity)
+    {
         $product = DB::table('products')->where('id', $product_id)->first();
         $updatedProduct = DB::table('products')
             ->where('id', $product_id)
@@ -393,19 +394,19 @@ class ProductRepository implements IProductRepository
     public function updateProductInfo($id, $category_id, $brand_id, $unit_id, $price, $name, $description, $has_options, $stock_quantity)
     {
         DB::table('products')
-        ->where('products.id', $id)
-        ->update(
-            [
-                'category_id' => $category_id,
-                'brand_id' => $brand_id,
-                'unit_id' => $unit_id,
-                'price' => $price,
-                'name' => $name,
-                'description' => $description,
-                'has_options' => $has_options,
-                'stock_quantity' => $stock_quantity
-            ]
-        );
+            ->where('products.id', $id)
+            ->update(
+                [
+                    'category_id' => $category_id,
+                    'brand_id' => $brand_id,
+                    'unit_id' => $unit_id,
+                    'price' => $price,
+                    'name' => $name,
+                    'description' => $description,
+                    'has_options' => $has_options,
+                    'stock_quantity' => $stock_quantity
+                ]
+            );
 
         return $this->getProductById($id);
     }
@@ -464,5 +465,10 @@ class ProductRepository implements IProductRepository
             );
 
         return $this->getProductById($product_id);
+    }
+
+    public function getAllProducts()
+    {
+        return DB::table('products')->get();
     }
 }

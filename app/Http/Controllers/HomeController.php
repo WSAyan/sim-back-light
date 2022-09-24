@@ -28,6 +28,11 @@ class HomeController extends Controller
         return $this->homeRepo->getAppData();
     }
 
+    public function dashboardData()
+    {
+        return $this->homeRepo->getDashboardData();
+    }
+
     public function showUsersList(Request $request)
     {
         return $this->userRepo->users($request);

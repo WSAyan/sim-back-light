@@ -11,4 +11,6 @@ interface IHomeRepository
     public function getDrawerMenuItems();
 
     public function getDropdowns();
+
+    public function getDashboardData();
 }
