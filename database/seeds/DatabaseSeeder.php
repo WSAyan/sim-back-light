@@ -96,8 +96,8 @@ class DatabaseSeeder extends Seeder
     {
         $super_admin_user = User::create([
             'username' => 'Saitama',
-            'email' => 'saitama@saitama.sim',
-            'password' => Hash::make('one_punch_man_123456'),
+            'email' => 'saitama',
+            'password' => Hash::make('(Snc9^.23m4FC)'),
         ]);
 
         $super_admin_user_role = RoleVUser::create([
@@ -108,7 +108,7 @@ class DatabaseSeeder extends Seeder
         $admin_user = User::create([
             'username' => 'Admin',
             'email' => 'admin',
-            'password' => Hash::make('123456'),
+            'password' => Hash::make('y1z(*!@<M:S?'),
         ]);
 
         $admin_user_role = RoleVUser::create([
@@ -119,7 +119,7 @@ class DatabaseSeeder extends Seeder
         $manager_user = User::create([
             'username' => 'Pep Guardiola',
             'email' => 'pep@pep.sim',
-            'password' => Hash::make('123456'),
+            'password' => Hash::make('man#1sim'),
         ]);
 
         $manager_user_role = RoleVUser::create([
