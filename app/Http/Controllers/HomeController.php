@@ -28,6 +28,11 @@ class HomeController extends Controller
         return $this->homeRepo->getAppData();
     }
 
+    public function dashboardData()
+    {
+        return $this->homeRepo->getDashboardData();
+    }
+
     public function showUsersList(Request $request)
     {
         return $this->userRepo->users($request);
@@ -36,5 +41,10 @@ class HomeController extends Controller
     public function showRolesList(Request $request)
     {
         return $this->userRepo->roles($request);
+    }
+
+    public function getDropdowns()
+    {
+        return $this->homeRepo->getDropdowns();
     }
 }

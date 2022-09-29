@@ -48,13 +48,17 @@ class CategoryRepository implements ICategoryRepository
         return ResponseFormatter::successResponse(SUCCESS_TYPE_OK, 'Category list generated', $this->formatCategories($categories), 'categories', true);
     }
 
+    public function getCategories()
+    {
+        return DB::table('categories')->get();
+    }
+
     public function getCategoryListWithDetails()
     {
         return DB::table('categories')
             ->leftJoin('categories_v_images', 'categories.id', '=', 'categories_v_images.category_id')
             ->leftJoin('images', 'categories_v_images.image_id', '=', 'images.id')
-            ->select
-            (
+            ->select(
                 'categories.id as id',
                 'categories.name as name',
                 'categories.description as description',

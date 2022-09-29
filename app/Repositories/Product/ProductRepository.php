@@ -100,7 +100,7 @@ class ProductRepository implements IProductRepository
         $productDetails['brand']['name'] = $product->brand_name;
         $productDetails['brand']['images'] = $this->categoryRepo->getCategoryImage($product->brand_id);
         $productDetails['unit']['id'] = $product->unit_id;
-        $productDetails['unit']['name'] = $product->unit_name;
+        $productDetails['unit']['unit_name'] = $product->unit_name;
         $productDetails['unit']['is_reminder_allowed'] = $product->unit_reminder_allowed;
         $productDetails['images'] = $this->getProductImage($product->product_id);
         $productDetails['product_options'] = $this->productOptionRepo->getProductOptionsWithDetails($product->product_id);
@@ -153,14 +153,16 @@ class ProductRepository implements IProductRepository
         $stock_quantity = $request->get('stock_quantity');
         $images = RequestFormatter::resolveJsonConfusion($request->get('images'));
 
-        if (sizeof($images) > 5) {
+        if (!is_null($images) && sizeof($images) > 5) {
             return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["You can upload maximum 5 images"]);
         }
 
         $product = $this->saveProduct($category_id, $brand_id, $unit_id, $price, $name, $description, $has_options, $stock_quantity);
 
-        foreach ($images as $item) {
-            $this->saveProductVImage($product->id, $item['id']);
+        if (!is_null($images)) {
+            foreach ($images as $item) {
+                $this->saveProductVImage($product->id, $item['id']);
+            }
         }
 
         $brand_name = $this->brandRepo->getBrand($brand_id)->brand_name;
@@ -194,6 +196,63 @@ class ProductRepository implements IProductRepository
         return ResponseFormatter::successResponse(SUCCESS_TYPE_CREATE, 'Product successfully created', $this->getProductDetailsById($product->id), 'product', true);
     }
 
+    public function updateProduct(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'category_id' => 'required',
+            'brand_id' => 'required',
+            'unit_id' => 'required',
+            'price' => 'required',
+            'has_options' => 'required',
+            'stock_quantity' => 'required',
+            'name' => 'required|string',
+            'description' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, $validator->errors()->all());
+        }
+
+        $category_id = $request->get('category_id');
+        $brand_id = $request->get('brand_id');
+        $unit_id = $request->get('unit_id');
+        $price = $request->get('price');
+        $name = $request->get('name');
+        $description = $request->get('description');
+        $has_options = $request->get('has_options');
+        $product_details = RequestFormatter::resolveJsonConfusion($request->get('product_details'));
+        $stock_quantity = $request->get('stock_quantity');
+        $images = RequestFormatter::resolveJsonConfusion($request->get('images'));
+
+        if (!is_null($images) && sizeof($images) > 5) {
+            return ResponseFormatter::errorResponse(ERROR_TYPE_VALIDATION, VALIDATION_ERROR_MESSAGE, ["You can upload maximum 5 images"]);
+        }
+
+        $product = $this->updateProductInfo($id, $category_id, $brand_id, $unit_id, $price, $name, $description, $has_options, $stock_quantity);
+
+        if (!is_null($images)) {
+            foreach ($images as $item) {
+                $this->updateProductVImage($product->id, $item['id']);
+            }
+        }
+
+        $brand_name = $this->brandRepo->getBrand($brand_id)->brand_name;
+        $category_name = $this->categoryRepo->getCategory($category_id)->name;
+
+        if ($has_options == false) {
+            // saving only one sku
+            $stock = $this->updateStock($product->id, $this->getStockProductById($id)->id, $stock_quantity);
+            if (is_null($stock)) {
+                return ResponseFormatter::errorResponse(ERROR_TYPE_COMMON, COMMON_ERROR_MESSAGE, null);
+            }
+        } else {
+            // todo: update multiple sku with opitions
+        }
+
+        return ResponseFormatter::successResponse(SUCCESS_TYPE_CREATE, 'Product successfully updated', $this->getProductDetailsById($product->id), 'product', true);
+    }
+
+
     public function showProduct($id)
     {
         return response()->json([
@@ -206,6 +265,11 @@ class ProductRepository implements IProductRepository
     public function getProductById($id)
     {
         return DB::table('products')->where('id', $id)->first();
+    }
+
+    public function getStockProductById($id)
+    {
+        return DB::table('stocks')->where('product_id', $id)->first();
     }
 
     /**
@@ -291,6 +355,23 @@ class ProductRepository implements IProductRepository
         $updatedStock = DB::table('stocks')
             ->where('id', $stock_id)
             ->update(['quantity' => $updatedQuantity]);
+
+        return DB::table('stocks')->where('id', $stock_id)->first();
+    }
+
+    public function updateStock($product_id, $stock_id, $quantity)
+    {
+        $product = DB::table('products')->where('id', $product_id)->first();
+        $updatedProduct = DB::table('products')
+            ->where('id', $product_id)
+            ->update(['stock_quantity' => $quantity]);
+
+        $stock = DB::table('stocks')->where('id', $stock_id)->first();
+        $updatedStock = DB::table('stocks')
+            ->where('id', $stock_id)
+            ->update(['quantity' => $quantity]);
+
+        return DB::table('stocks')->where('id', $stock_id)->first();
     }
 
     public function saveProduct($category_id, $brand_id, $unit_id, $price, $name, $description, $has_options, $stock_quantity)
@@ -308,6 +389,26 @@ class ProductRepository implements IProductRepository
         $product->save();
 
         return $product;
+    }
+
+    public function updateProductInfo($id, $category_id, $brand_id, $unit_id, $price, $name, $description, $has_options, $stock_quantity)
+    {
+        DB::table('products')
+            ->where('products.id', $id)
+            ->update(
+                [
+                    'category_id' => $category_id,
+                    'brand_id' => $brand_id,
+                    'unit_id' => $unit_id,
+                    'price' => $price,
+                    'name' => $name,
+                    'description' => $description,
+                    'has_options' => $has_options,
+                    'stock_quantity' => $stock_quantity
+                ]
+            );
+
+        return $this->getProductById($id);
     }
 
     public function saveStock($product_id, $sku, $stock_quantity)
@@ -344,5 +445,30 @@ class ProductRepository implements IProductRepository
         $productVImage->save();
 
         return $productVImage;
+    }
+
+    public function updateProductVImage($product_id, $image_id)
+    {
+        $productVImage = new ProductVImage([
+            'product_id' => $product_id,
+            'image_id' => $image_id,
+        ]);
+        $productVImage->save();
+
+        DB::table('products_v_images')
+            ->where('products_v_images.product_id', $product_id)
+            ->update(
+                [
+                    'product_id' => $product_id,
+                    'image_id' => $image_id,
+                ]
+            );
+
+        return $this->getProductById($product_id);
+    }
+
+    public function getAllProducts()
+    {
+        return DB::table('products')->get();
     }
 }

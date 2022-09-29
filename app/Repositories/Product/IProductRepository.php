@@ -22,6 +22,8 @@ interface IProductRepository
 
     public function updateProductStock($product_id, $stock_id, $quantity);
 
+    public function updateProduct(Request $request, $id);
+
     public function saveProduct($category_id, $brand_id, $unit_id, $price, $name, $description, $has_options, $stock_quantity);
 
     public function saveStock($product_id, $sku, $stock_quantity);
@@ -29,4 +31,6 @@ interface IProductRepository
     public function saveProductVOption($product_id, $product_options_id, $product_options_details_id, $stock_id);
 
     public function saveProductVImage($product_id, $image_id);
+
+    public function getAllProducts();
 }
